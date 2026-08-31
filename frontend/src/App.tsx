@@ -11,6 +11,7 @@ import { AuditLedgerView } from './components/AuditLedgerView';
 import { CareCircleView } from './components/CareCircleView';
 import { ProfileView } from './components/ProfileView';
 import { AuthView } from './components/AuthView';
+import { AdminPatientManagementView } from './components/AdminPatientManagementView';
 
 const MainContent: React.FC = () => {
   const { activeTab } = useEmergency();
@@ -18,6 +19,7 @@ const MainContent: React.FC = () => {
   return (
     <main className="flex-1 p-2 sm:p-6 max-w-6xl mx-auto w-full overflow-x-hidden">
       {activeTab === 'dashboard' && <DashboardView />}
+      {activeTab === 'admin-patients' && <AdminPatientManagementView />}
       {activeTab === 'identity' && <EmergencyIdentityView />}
       {activeTab === 'scanner' && <BreakGlassScannerView />}
       {activeTab === 'profile' && <ProfileView />}

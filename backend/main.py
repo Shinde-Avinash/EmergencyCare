@@ -123,24 +123,12 @@ def register_user(req: schemas.AuthRegisterRequest, db: Session = Depends(get_db
 
 @app.post("/api/auth/login")
 def login_user(req: schemas.AuthLoginRequest, db: Session = Depends(get_db)):
-    from auth_service import verify_password, create_access_token, hash_password
+    from auth_service import verify_password, create_access_token
     user = db.query(models.User).filter(models.User.email == req.email).first()
     
-    # Demo credentials fallback or password check
-    if not user:
-        # Create user for demo if first time
-        user = models.User(
-            full_name="Verified User",
-            email=req.email,
-            password_hash=hash_password(req.password),
-            role="PATIENT"
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    elif user.password_hash and not verify_password(req.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password credentials")
-
+    if not user or not verify_password(req.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password. Access Denied.")
+        
     token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role})
     return {
         "access_token": token,
@@ -447,3 +435,160 @@ def get_care_circle(patient_id: int = 1, db: Session = Depends(get_db)):
         "permission_tier": m.permission_tier,
         "notify_on_break_glass": m.notify_on_break_glass
     } for m in members]
+
+# --- ADMIN PATIENT MANAGEMENT (FULL CRUD) ---
+@app.get("/api/admin/patients")
+def admin_get_all_patients(db: Session = Depends(get_db)):
+    users = db.query(models.User).all()
+    results = []
+    for user in users:
+        p = db.query(models.PatientProfile).filter(models.PatientProfile.user_id == user.id).first()
+        if not p:
+            emg_id = f"EMG-{abs(hash(user.email)) % 10000:04d}-X"
+            p = models.PatientProfile(
+                user_id=user.id,
+                emergency_id=emg_id,
+                blood_group="B+",
+                date_of_birth="1995-01-01",
+                gender="Male",
+                primary_language="English",
+                organ_donor=True,
+                critical_allergies="None declared",
+                critical_conditions="None declared",
+                active_medications="None declared",
+                emergency_instructions="Standard resuscitation protocol."
+            )
+            db.add(p)
+            db.commit()
+            db.refresh(p)
+
+        allergies = [a.strip() for a in p.critical_allergies.split(",") if a.strip()] if p.critical_allergies else []
+        conditions = [c.strip() for c in p.critical_conditions.split(",") if c.strip()] if p.critical_conditions else []
+        meds = [m.strip() for m in p.active_medications.split(",") if m.strip()] if p.active_medications else []
+
+        results.append({
+            "id": p.id,
+            "user_id": user.id,
+            "emergency_id": p.emergency_id,
+            "full_name": user.full_name,
+            "email": user.email,
+            "phone": user.phone or "",
+            "role": user.role,
+            "blood_group": p.blood_group,
+            "dob": p.date_of_birth,
+            "gender": p.gender,
+            "primary_language": p.primary_language,
+            "organ_donor": p.organ_donor,
+            "critical_allergies": allergies,
+            "critical_conditions": conditions,
+            "active_medications": meds,
+            "emergency_instructions": p.emergency_instructions,
+            "past_surgeries": p.past_surgeries,
+            "recent_reports": p.recent_reports
+        })
+    return results
+
+@app.post("/api/admin/patients")
+def admin_create_patient(req: schemas.AdminPatientCreateRequest, db: Session = Depends(get_db)):
+    from auth_service import hash_password
+    existing = db.query(models.User).filter(models.User.email == req.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+
+    pwd_hash = hash_password("password123")
+    user = models.User(
+        full_name=req.full_name,
+        email=req.email,
+        password_hash=pwd_hash,
+        role="PATIENT",
+        phone=req.phone or "+91 98000 00000"
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    emg_id = f"EMG-{abs(hash(req.email)) % 10000:04d}-X"
+    profile = models.PatientProfile(
+        user_id=user.id,
+        emergency_id=emg_id,
+        blood_group=req.blood_group,
+        date_of_birth=req.date_of_birth or "1995-01-01",
+        gender=req.gender or "Male",
+        primary_language=req.primary_language or "English",
+        organ_donor=req.organ_donor,
+        critical_allergies=req.critical_allergies,
+        critical_conditions=req.critical_conditions,
+        active_medications=req.active_medications,
+        emergency_instructions=req.emergency_instructions
+    )
+    db.add(profile)
+    db.commit()
+    db.refresh(profile)
+
+    identity = models.EmergencyIdentity(
+        patient_id=profile.id,
+        emergency_id=emg_id,
+        qr_break_glass_token=f"BG-TOKEN-{profile.id}-ADMIN-KEY",
+        nfc_payload=f"https://emergencycare.app/break-glass/BG-TOKEN-{profile.id}-ADMIN-KEY",
+        printable_card_code=f"CARD-{emg_id}",
+        lockscreen_badge_url=f"https://emergencycare.app/badge/{emg_id}",
+        is_active=True
+    )
+    db.add(identity)
+    db.commit()
+
+    return {"message": "Patient profile created successfully", "patient_id": profile.id, "emergency_id": emg_id}
+
+@app.put("/api/admin/patients/{patient_id}")
+def admin_update_patient(patient_id: int, req: schemas.AdminPatientUpdateRequest, db: Session = Depends(get_db)):
+    profile = db.query(models.PatientProfile).filter(models.PatientProfile.id == patient_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    user = db.query(models.User).filter(models.User.id == profile.user_id).first()
+    if user and req.full_name:
+        user.full_name = req.full_name
+    if user and req.phone:
+        user.phone = req.phone
+
+    if req.blood_group is not None:
+        profile.blood_group = req.blood_group
+    if req.date_of_birth is not None:
+        profile.date_of_birth = req.date_of_birth
+    if req.gender is not None:
+        profile.gender = req.gender
+    if req.primary_language is not None:
+        profile.primary_language = req.primary_language
+    if req.organ_donor is not None:
+        profile.organ_donor = req.organ_donor
+    if req.critical_allergies is not None:
+        profile.critical_allergies = req.critical_allergies
+    if req.critical_conditions is not None:
+        profile.critical_conditions = req.critical_conditions
+    if req.active_medications is not None:
+        profile.active_medications = req.active_medications
+    if req.emergency_instructions is not None:
+        profile.emergency_instructions = req.emergency_instructions
+
+    db.commit()
+    return {"message": "Patient updated successfully"}
+
+@app.delete("/api/admin/patients/{patient_id}")
+def admin_delete_patient(patient_id: int, db: Session = Depends(get_db)):
+    profile = db.query(models.PatientProfile).filter(models.PatientProfile.id == patient_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+
+    db.query(models.EmergencyIdentity).filter(models.EmergencyIdentity.patient_id == patient_id).delete()
+    db.query(models.CareCircleMember).filter(models.CareCircleMember.patient_id == patient_id).delete()
+
+    user_id = profile.user_id
+    db.delete(profile)
+    db.commit()
+
+    if user_id:
+        db.query(models.User).filter(models.User.id == user_id).delete()
+        db.commit()
+
+    return {"message": "Patient profile and user account deleted successfully"}
+

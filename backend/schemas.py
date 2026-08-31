@@ -13,6 +13,33 @@ class AuthRegisterRequest(BaseModel):
     role: str = "PATIENT"
     phone: Optional[str] = None
 
+class AdminPatientCreateRequest(BaseModel):
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    blood_group: str = "B+"
+    date_of_birth: Optional[str] = "1995-01-01"
+    gender: Optional[str] = "Male"
+    primary_language: Optional[str] = "English"
+    organ_donor: bool = True
+    critical_allergies: str = "None declared"
+    critical_conditions: str = "None declared"
+    active_medications: str = "None declared"
+    emergency_instructions: str = "Standard resuscitation protocol."
+
+class AdminPatientUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    blood_group: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    primary_language: Optional[str] = None
+    organ_donor: Optional[bool] = None
+    critical_allergies: Optional[str] = None
+    critical_conditions: Optional[str] = None
+    active_medications: Optional[str] = None
+    emergency_instructions: Optional[str] = None
+
 class BreakGlassRequest(BaseModel):
     qr_token: str
     requester_name: str
