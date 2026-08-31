@@ -15,7 +15,9 @@ import {
   Layers,
   ZoomIn,
   ZoomOut,
-  Maximize2
+  Crosshair,
+  LocateFixed,
+  Search
 } from 'lucide-react';
 
 interface ExtendedHospital extends Hospital {
@@ -26,7 +28,7 @@ interface ExtendedHospital extends Hospital {
 export const HospitalRoutingView: React.FC = () => {
   const { activeIncident, updateIncidentStatus, showToast, patient } = useEmergency();
   
-  // Real Hospitals with geographic coordinates in Pune
+  // Real-World Hospitals Database
   const defaultHospitals: ExtendedHospital[] = [
     {
       id: 1,
@@ -47,6 +49,57 @@ export const HospitalRoutingView: React.FC = () => {
     },
     {
       id: 2,
+      name: "Sahyadri Super Specialty Hospital",
+      address: "Deccan Gymkhana, Pune (3.2 km away)",
+      trauma_level: "Level 1",
+      has_cath_lab: true,
+      has_burn_unit: false,
+      available_icu_beds: 3,
+      distance_km: 3.2,
+      eta_minutes: 8,
+      score: 91.2,
+      recommendation_reason: "Level-1 Cardiac & Trauma center. Fast 8 min access via Karve Road.",
+      capability_summary: "Level-1 Cardiac & Trauma • 3 ICU Beds Available • 24x7 Cath Lab",
+      is_recommended: false,
+      lat: 18.5165,
+      lng: 73.8402
+    },
+    {
+      id: 3,
+      name: "KEM Hospital & Research Centre",
+      address: "Rasta Peth, Pune (3.9 km away)",
+      trauma_level: "Level 1",
+      has_cath_lab: true,
+      has_burn_unit: true,
+      available_icu_beds: 5,
+      distance_km: 3.9,
+      eta_minutes: 11,
+      score: 88.0,
+      recommendation_reason: "Pediatric & Multispecialty Level-1 Trauma Center with 5 available ICU beds.",
+      capability_summary: "Level-1 Pediatric & Trauma • 5 ICU Beds Available • Full Surgical Suite",
+      is_recommended: false,
+      lat: 18.5228,
+      lng: 73.8685
+    },
+    {
+      id: 4,
+      name: "Poona Hospital & Research Centre",
+      address: "Sadashiv Peth, Pune (3.0 km away)",
+      trauma_level: "Level 2",
+      has_cath_lab: true,
+      has_burn_unit: false,
+      available_icu_beds: 2,
+      distance_km: 3.0,
+      eta_minutes: 9,
+      score: 85.5,
+      recommendation_reason: "Close proximity (3.0 km). 2 available ICU beds for general emergency stabilization.",
+      capability_summary: "Level-2 ER • 2 ICU Beds Available • Emergency Resuscitation Bay",
+      is_recommended: false,
+      lat: 18.5122,
+      lng: 73.8465
+    },
+    {
+      id: 5,
       name: "Ruby Hall ER Center",
       address: "Bund Garden Road, Pune (4.1 km away)",
       trauma_level: "Level 2",
@@ -56,14 +109,31 @@ export const HospitalRoutingView: React.FC = () => {
       distance_km: 4.1,
       eta_minutes: 12,
       score: 84.0,
-      recommendation_reason: "Level-2 Trauma capability with 2 available ICU beds. Slightly higher traffic ETA (12 min).",
+      recommendation_reason: "Level-2 Trauma capability with 2 available ICU beds. Moderate traffic ETA (12 min).",
       capability_summary: "Level-2 Trauma • 2 ICU Beds Available • Emergency Surgery Unit",
       is_recommended: false,
       lat: 18.5362,
       lng: 73.8778
     },
     {
-      id: 3,
+      id: 6,
+      name: "Deenanath Mangeshkar Hospital",
+      address: "Erandwane, Pune (4.8 km away)",
+      trauma_level: "Level 1",
+      has_cath_lab: true,
+      has_burn_unit: true,
+      available_icu_beds: 6,
+      distance_km: 4.8,
+      eta_minutes: 14,
+      score: 81.5,
+      recommendation_reason: "6 available ICU beds and comprehensive burn care unit. Highly capable alternative.",
+      capability_summary: "Level-1 Multispecialty • 6 ICU Beds Available • Burn Unit Ready",
+      is_recommended: false,
+      lat: 18.5042,
+      lng: 73.8324
+    },
+    {
+      id: 7,
       name: "Jehangir Specialty Hospital",
       address: "Near Railway Station, Pune (5.8 km away)",
       trauma_level: "Level 2",
@@ -78,6 +148,23 @@ export const HospitalRoutingView: React.FC = () => {
       is_recommended: false,
       lat: 18.5292,
       lng: 73.8746
+    },
+    {
+      id: 8,
+      name: "Noble Hospital & ER Center",
+      address: "Hadapsar, Pune (8.5 km away)",
+      trauma_level: "Level 2",
+      has_cath_lab: true,
+      has_burn_unit: false,
+      available_icu_beds: 3,
+      distance_km: 8.5,
+      eta_minutes: 24,
+      score: 65.0,
+      recommendation_reason: "Farther distance (8.5 km). Suitable secondary backup for Eastern Pune region.",
+      capability_summary: "Level-2 Regional ER • 3 ICU Beds Available • Emergency Triage",
+      is_recommended: false,
+      lat: 18.5085,
+      lng: 73.9260
     }
   ];
 
@@ -87,36 +174,78 @@ export const HospitalRoutingView: React.FC = () => {
   const [handoffStatus, setHandoffStatus] = useState<string | null>(null);
   const [doctorNotes, setDoctorNotes] = useState('Acknowledged by ER Triage desk. Level-1 Trauma Bay prepared with blood warmer.');
 
+  // Interactive Map & Real Geolocation Search State
+  const [mapLayer, setMapLayer] = useState<'terrain' | 'satellite'>('terrain');
+  const [userGpsCoords, setUserGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [currentLocationName, setCurrentLocationName] = useState('Detecting your GPS location...');
+
   const mapInstanceRef = useRef<any>(null);
   const routePolylineRef = useRef<any>(null);
+  const userMarkerRef = useRef<any>(null);
+
+  // Auto Detect Device GPS Location on Mount
+  useEffect(() => {
+    handleShowCurrentLocation();
+  }, []);
+
+  const fetchHospitals = async () => {
+    try {
+      const res = await fetch('/api/hospitals/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patient_lat: userGpsCoords?.lat || 18.5204,
+          patient_lng: userGpsCoords?.lng || 73.8567,
+          required_specialty: specialty
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hospitals && data.hospitals.length > 0) {
+          setHospitals(data.hospitals);
+          const rec = data.hospitals.find((h: ExtendedHospital) => h.is_recommended) || data.hospitals[0];
+          setSelectedHospital(rec);
+        }
+      }
+    } catch (e) {
+      console.warn("Using fallback hospitals list", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchHospitals();
+  }, [specialty, userGpsCoords]);
 
   // Initialize Real OpenStreetMap Leaflet Map
   useEffect(() => {
     const L = (window as any).L;
     if (!L) return;
 
-    // Check if map container element exists
     const mapContainer = document.getElementById('leaflet-emergency-map');
     if (!mapContainer) return;
 
     if (!mapInstanceRef.current) {
-      // Create Leaflet Map Instance centered at Patient Location
+      const initialLat = userGpsCoords?.lat || 18.5204;
+      const initialLng = userGpsCoords?.lng || 73.8567;
+
       const map = L.map('leaflet-emergency-map', {
-        center: [18.5204, 73.8567],
+        center: [initialLat, initialLng],
         zoom: 13,
         zoomControl: false
       });
 
-      // Add Real OpenStreetMap Tile Layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       }).addTo(map);
 
-      // Custom Icon Generators
+      // Custom Icons
       const patientIcon = L.divIcon({
         className: 'custom-patient-pin',
-        html: `<div style="background-color: #ef4444; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); animation: pulse 1.5s infinite;">🚨</div>`,
+        html: `<div style="background-color: #ef4444; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">🚨</div>`,
         iconSize: [36, 36],
         iconAnchor: [18, 18]
       });
@@ -128,17 +257,14 @@ export const HospitalRoutingView: React.FC = () => {
         iconAnchor: [16, 16]
       });
 
-      // 🔴 Patient Incident Marker
-      L.marker([18.5204, 73.8567], { icon: patientIcon })
+      L.marker([initialLat, initialLng], { icon: patientIcon })
         .addTo(map)
-        .bindPopup(`<b>🚨 PATIENT EMERGENCY INCIDENT</b><br/>FC Road Sector 4, Pune<br/>Blood B+ | Penicillin Allergy`);
+        .bindPopup(`<b>🚨 PATIENT EMERGENCY INCIDENT</b>`);
 
-      // 🚑 Ambulance GPS Marker
       L.marker([18.5255, 73.8520], { icon: ambulanceIcon })
         .addTo(map)
-        .bindPopup(`<b>🚑 AMBULANCE EN ROUTE</b><br/>Dispatching to ER`);
+        .bindPopup(`<b>🚑 AMBULANCE EN ROUTE</b>`);
 
-      // 🏥 Real Hospital Markers
       hospitals.forEach(h => {
         const hospitalIcon = L.divIcon({
           className: 'custom-hospital-pin',
@@ -164,15 +290,16 @@ export const HospitalRoutingView: React.FC = () => {
       mapInstanceRef.current = map;
     }
 
-    // Update GPS Route Line whenever selected hospital changes
     if (mapInstanceRef.current && selectedHospital) {
       if (routePolylineRef.current) {
         mapInstanceRef.current.removeLayer(routePolylineRef.current);
       }
 
-      // Draw real polyline route connecting Patient -> Ambulance -> Destination
+      const startLat = userGpsCoords?.lat || 18.5204;
+      const startLng = userGpsCoords?.lng || 73.8567;
+
       const routePoints = [
-        [18.5204, 73.8567],
+        [startLat, startLng],
         [18.5255, 73.8520],
         [selectedHospital.lat, selectedHospital.lng]
       ];
@@ -183,16 +310,133 @@ export const HospitalRoutingView: React.FC = () => {
         opacity: 0.8,
         dashArray: '8, 8'
       }).addTo(mapInstanceRef.current);
-
-      // Smooth fly to selected hospital location
-      mapInstanceRef.current.flyTo([selectedHospital.lat, selectedHospital.lng], 14, {
-        duration: 1.2
-      });
     }
-  }, [selectedHospital, hospitals]);
+  }, [selectedHospital, hospitals, userGpsCoords]);
+
+  // HTML5 Geolocation API: Locate User's Real Device Coordinates
+  const handleShowCurrentLocation = () => {
+    setIsLocating(true);
+    showToast("🎯 Requesting your real GPS device location...");
+
+    if (!navigator.geolocation) {
+      showToast("Geolocation is not supported by your browser");
+      setIsLocating(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserGpsCoords({ lat: latitude, lng: longitude });
+        setIsLocating(false);
+
+        // Reverse Geocode using OpenStreetMap Nominatim
+        try {
+          const revRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          if (revRes.ok) {
+            const revData = await revRes.json();
+            setCurrentLocationName(revData.display_name || `Lat: ${latitude.toFixed(4)}°, Lng: ${longitude.toFixed(4)}°`);
+          }
+        } catch (e) {
+          setCurrentLocationName(`Lat: ${latitude.toFixed(4)}°, Lng: ${longitude.toFixed(4)}°`);
+        }
+
+        const L = (window as any).L;
+        if (mapInstanceRef.current && L) {
+          if (userMarkerRef.current) {
+            mapInstanceRef.current.removeLayer(userMarkerRef.current);
+          }
+
+          const myLocationIcon = L.divIcon({
+            className: 'custom-my-location-pin',
+            html: `<div style="background-color: #0284c7; color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.5); animation: pulse 2s infinite;">🎯</div>`,
+            iconSize: [38, 38],
+            iconAnchor: [19, 19]
+          });
+
+          userMarkerRef.current = L.marker([latitude, longitude], { icon: myLocationIcon })
+            .addTo(mapInstanceRef.current)
+            .bindPopup(`<b>🎯 YOUR REAL GPS LOCATION</b><br/>${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E`)
+            .openPopup();
+
+          mapInstanceRef.current.flyTo([latitude, longitude], 15, { duration: 1.5 });
+        }
+
+        showToast(`📍 Located Real Device GPS: ${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E`);
+      },
+      (error) => {
+        setIsLocating(false);
+        const fallbackLat = 18.5204;
+        const fallbackLng = 73.8567;
+        setUserGpsCoords({ lat: fallbackLat, lng: fallbackLng });
+        setCurrentLocationName("FC Road Sector 4, Pune (Default Seed Location)");
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([fallbackLat, fallbackLng], 14);
+        }
+        showToast("📍 Permission denied: Using FC Road Sector 4 location.");
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
+  // OpenStreetMap Nominatim Geocoding Location Search Handler
+  const handleLocationSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    showToast(`🔍 Searching OpenStreetMap for: "${searchQuery}"...`);
+
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+      if (res.ok) {
+        const results = await res.json();
+        if (results && results.length > 0) {
+          const firstMatch = results[0];
+          const lat = parseFloat(firstMatch.lat);
+          const lng = parseFloat(firstMatch.lon);
+
+          setUserGpsCoords({ lat, lng });
+          setCurrentLocationName(firstMatch.display_name);
+
+          const L = (window as any).L;
+          if (mapInstanceRef.current && L) {
+            if (userMarkerRef.current) {
+              mapInstanceRef.current.removeLayer(userMarkerRef.current);
+            }
+
+            const searchMarkerIcon = L.divIcon({
+              className: 'custom-search-pin',
+              html: `<div style="background-color: #7c3aed; color: white; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.5);">📍</div>`,
+              iconSize: [38, 38],
+              iconAnchor: [19, 19]
+            });
+
+            userMarkerRef.current = L.marker([lat, lng], { icon: searchMarkerIcon })
+              .addTo(mapInstanceRef.current)
+              .bindPopup(`<b>📍 SEARCHED LOCATION</b><br/>${firstMatch.display_name}`)
+              .openPopup();
+
+            mapInstanceRef.current.flyTo([lat, lng], 14, { duration: 1.5 });
+          }
+
+          showToast(`✓ Map moved to: ${firstMatch.display_name.split(',')[0]}`);
+        } else {
+          showToast(`No matches found for "${searchQuery}".`);
+        }
+      }
+    } catch (err) {
+      showToast("Search failed. Check network connection.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const handleSelectHospital = async (h: ExtendedHospital) => {
     setSelectedHospital(h);
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo([h.lat, h.lng], 15, { duration: 1.2 });
+    }
     await updateIncidentStatus('HOSPITAL_SELECTED', h.id);
     showToast(`Destination hospital selected: ${h.name}`);
   };
@@ -243,11 +487,11 @@ export const HospitalRoutingView: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-emerald-700 font-extrabold text-xs uppercase tracking-wider mb-1">
             <Building2 className="w-4 h-4 text-emerald-600" />
-            <span>INTELLIGENT GPS ROUTING & ER DISPATCH</span>
+            <span>REAL OPENSTREETMAP GPS ENGINE & SEARCH</span>
           </div>
           <h2 className="text-2xl font-black text-slate-900">Hospital Destination & Dispatch Map</h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Real OpenStreetMap GPS engine ranking hospital ER destinations by travel time, trauma level, and ICU availability.
+            Auto-detects your real device GPS coordinates or search any location in the world using OpenStreetMap Nominatim.
           </p>
         </div>
 
@@ -266,26 +510,56 @@ export const HospitalRoutingView: React.FC = () => {
         </div>
       </div>
 
-      {/* REAL OPENSTREETMAP LEAFLET MAP CONTAINER */}
+      {/* REAL OPENSTREETMAP LEAFLET MAP CONTAINER WITH LOCATION SEARCH */}
       <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-sm space-y-3">
-        <div className="flex items-center justify-between px-1">
+        
+        {/* Search Bar & Location Controls */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-1">
+          
+          <form onSubmit={handleLocationSearch} className="flex-1 flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="🔍 Search any City, Address, or Hospital in the world (e.g. Mumbai, London)..."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-900 shadow-xs"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSearching}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2 rounded-xl text-xs shadow-sm transition-transform hover:scale-[1.02]"
+            >
+              {isSearching ? "Searching..." : "Search"}
+            </button>
+          </form>
+
           <div className="flex items-center space-x-2">
-            <Navigation className="w-4 h-4 text-rose-600 animate-pulse" />
-            <h3 className="font-black text-slate-900 text-sm">OpenStreetMap Real-Time Emergency GPS Engine</h3>
-            <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full uppercase">
-              LIVE TILES ACTIVE
-            </span>
+            <button
+              onClick={handleShowCurrentLocation}
+              disabled={isLocating}
+              className="bg-sky-700 hover:bg-sky-800 text-white font-black px-3.5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02] whitespace-nowrap"
+            >
+              <LocateFixed className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
+              <span>{isLocating ? "Locating GPS..." : "🎯 Show My Real GPS"}</span>
+            </button>
           </div>
 
-          <div className="text-xs font-bold text-slate-600">
-            Selected ER: <span className="font-black text-emerald-700">{selectedHospital?.name}</span> ({selectedHospital?.distance_km} km • {selectedHospital?.eta_minutes} min)
-          </div>
+        </div>
+
+        {/* Current Active Location Display Badge */}
+        <div className="bg-slate-100 p-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 flex items-center space-x-2">
+          <MapPin className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span className="truncate">Active Location: <strong className="text-slate-900 font-black">{currentLocationName}</strong></span>
         </div>
 
         {/* REAL LEAFLET MAP DOM CANVAS */}
         <div 
           id="leaflet-emergency-map" 
-          className="w-full h-80 rounded-2xl border border-slate-200 shadow-inner z-10 overflow-hidden" 
+          className="w-full h-80 rounded-2xl border border-slate-200 shadow-inner z-10 overflow-hidden relative" 
         />
       </div>
 
@@ -295,7 +569,7 @@ export const HospitalRoutingView: React.FC = () => {
         {/* Hospital Options List */}
         <div className="lg:col-span-2 space-y-4">
           <h3 className="font-black text-lg text-slate-900 flex items-center justify-between">
-            <span>Destination Hospitals & ER Ranks</span>
+            <span>Destination Hospitals & ER Ranks ({hospitals.length})</span>
             <span className="text-xs text-slate-500 font-medium">Ranked by Emergency Decision Engine</span>
           </h3>
 

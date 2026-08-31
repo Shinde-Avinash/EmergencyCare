@@ -148,13 +148,12 @@ export const AuthView: React.FC = () => {
         loginUser(data.user.email, data.user.role as UserRole, data.user.full_name, data.access_token);
         setIsSubmitting(false);
       } else {
-        const err = await res.json();
-        setErrorMessage(err.detail || "Authentication failed. Check credentials.");
+        const err = await res.json().catch(() => ({ detail: "Authentication failed." }));
+        setErrorMessage(err.detail || "Invalid email or password. Access Denied.");
         setIsSubmitting(false);
       }
     } catch (e) {
-      // Fallback JWT login
-      loginUser(email || "patient@emergencycare.org", selectedRole, name || "Rahul Sharma", "local_jwt_signature_token");
+      setErrorMessage("Network error: Cannot reach authentication server.");
       setIsSubmitting(false);
     }
   };

@@ -131,8 +131,15 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentRole(role);
     localStorage.setItem("emergencycare_jwt", token);
     localStorage.setItem("emergencycare_user", JSON.stringify(u));
-    setActiveTab('dashboard');
-    showToast(`✓ Welcome ${name}! Emergency Care Portal Unlocked.`);
+
+    // Role-suited default tab routing
+    let defaultTab = 'dashboard';
+    if (role === 'BYSTANDER' || role === 'PARAMEDIC') defaultTab = 'scanner';
+    else if (role === 'HOSPITAL_STAFF') defaultTab = 'hospitals';
+    else if (role === 'ADMIN') defaultTab = 'admin-patients';
+
+    setActiveTab(defaultTab);
+    showToast(`✓ Welcome ${name}! Unlocked ${role} Portal.`);
   };
 
   const logoutUser = () => {
