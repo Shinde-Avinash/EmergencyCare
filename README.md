@@ -5,6 +5,7 @@
 ---
 
 ## 🌟 Key Platform Features
+<img width="1458" height="813" alt="image" src="https://github.com/user-attachments/assets/c52a6de4-abc0-419b-8d31-98e7d03320de" />
 
 ### 1. 🚨 Controlled Break-Glass Emergency Access
 - **Privacy-First Emergency Identity**: Patients carry a unique QR/NFC token. Raw medical records are **never stored directly on the physical code**.
