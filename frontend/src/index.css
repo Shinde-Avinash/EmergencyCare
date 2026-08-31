@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #d6e6e3;
+    color: #1e293b;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom Healthcare Design System Utilities matching reference UI */
+.bg-healthcare-app {
+  background-color: #d6e6e3;
+}
+
+.bg-healthcare-frame {
+  background-color: #ebf3f1;
+}
+
+.bg-healthcare-sidebar {
+  background-color: #e5f0ed;
+}
+
+.bg-healthcare-card-mint {
+  background-color: #e8f4f0;
+}
+
+.bg-healthcare-card-blue {
+  background-color: #edf3fe;
+}
+
+.bg-healthcare-card-yellow {
+  background-color: #fef9e6;
+}
+
+.bg-healthcare-card-rose {
+  background-color: #fceeed;
+}
+
+.shadow-healthcare {
+  box-shadow: 0 10px 25px -5px rgba(14, 116, 144, 0.08), 0 8px 10px -6px rgba(14, 116, 144, 0.04);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

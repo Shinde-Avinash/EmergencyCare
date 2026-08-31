@@ -1,0 +1,41 @@
+# Node.js / Frontend dependencies & build output
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build_out.txt
+*.log
+USER.md
+# Python / Backend caches & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+env/
+ENV/
+backend/venv/
+backend/__pycache__/
+
+# SQLite Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/*.db
+backend/*.sqlite3
+
+# Environment & Secret files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
