@@ -17,7 +17,7 @@ export const BreakGlassScannerView: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [sessionData, setSessionData] = useState<any>(null);
   const [requesterName, setRequesterName] = useState('Officer R. Patil');
-  const [requesterRole, setRequesterRole] = useState(currentRole === 'PATIENT' ? 'PARAMEDIC' : currentRole);
+  const [requesterRole, setRequesterRole] = useState<any>(currentRole === 'PATIENT' ? 'PARAMEDIC' : currentRole);
   const [accessReason, setAccessReason] = useState('Roadside Accident — Unconscious Patient');
   const [timeLeft, setTimeLeft] = useState(900); // 15 mins
 

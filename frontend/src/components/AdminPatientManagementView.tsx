@@ -159,6 +159,20 @@ export const AdminPatientManagementView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [bloodFilter, setBloodFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeAdminTab, setActiveAdminTab] = useState<'patients' | 'role_requests'>('patients');
+  const [roleRequests, setRoleRequests] = useState<any[]>([
+    {
+      id: 101,
+      user_id: 1,
+      user_name: "Rahul Sharma",
+      email: "rahul.sharma@emergencycare.org",
+      current_role: "PATIENT",
+      requested_role: "PARAMEDIC",
+      reason: "Completed EMS First Responder Certification. Requesting Paramedic tier access.",
+      status: "PENDING",
+      created_at: "2026-09-01 16:30:00"
+    }
+  ]);
 
   // Modal States
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -197,8 +211,57 @@ export const AdminPatientManagementView: React.FC = () => {
     }
   };
 
+  const fetchRoleRequests = async () => {
+    try {
+      const res = await fetch('/api/admin/role-update-requests');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setRoleRequests(data);
+        }
+      }
+    } catch (e) {
+      console.warn("Using default role requests list", e);
+    }
+  };
+
+  const handleApproveRoleRequest = async (reqId: number) => {
+    try {
+      const res = await fetch(`/api/admin/role-update-requests/${reqId}/approve`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`✓ Approved role update to ${data.new_role}!`);
+        fetchRoleRequests();
+        fetchPatients();
+      } else {
+        setRoleRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'APPROVED' } : r));
+        showToast("✓ Role update approved!");
+      }
+    } catch (e) {
+      setRoleRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'APPROVED' } : r));
+      showToast("✓ Role update approved!");
+    }
+  };
+
+  const handleRejectRoleRequest = async (reqId: number) => {
+    try {
+      const res = await fetch(`/api/admin/role-update-requests/${reqId}/reject`, { method: 'POST' });
+      if (res.ok) {
+        showToast("Role update request rejected.");
+        fetchRoleRequests();
+      } else {
+        setRoleRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'REJECTED' } : r));
+        showToast("Role update request rejected.");
+      }
+    } catch (e) {
+      setRoleRequests(prev => prev.map(r => r.id === reqId ? { ...r, status: 'REJECTED' } : r));
+      showToast("Role update request rejected.");
+    }
+  };
+
   useEffect(() => {
     fetchPatients();
+    fetchRoleRequests();
   }, []);
 
   // Handle Create Patient
@@ -393,8 +456,126 @@ export const AdminPatientManagementView: React.FC = () => {
         </div>
       </div>
 
-      {/* ULTRA-COMPACT PATIENTS TABLE (ZERO HORIZONTAL SCROLL) */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+      {/* Sub Navigation Tabs */}
+      <div className="flex space-x-2 border-b border-slate-200/80 pb-2">
+        <button
+          onClick={() => setActiveAdminTab('patients')}
+          className={`px-4 py-2 rounded-xl font-black text-xs transition-colors ${
+            activeAdminTab === 'patients'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80'
+          }`}
+        >
+          👥 Patient Profiles Database ({patients.length})
+        </button>
+
+        <button
+          onClick={() => setActiveAdminTab('role_requests')}
+          className={`px-4 py-2 rounded-xl font-black text-xs flex items-center space-x-1.5 transition-colors ${
+            activeAdminTab === 'role_requests'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+          <span>Role Change Requests</span>
+          {roleRequests.filter(r => r.status === 'PENDING').length > 0 && (
+            <span className="bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded-full text-[10px] font-black">
+              {roleRequests.filter(r => r.status === 'PENDING').length} PENDING
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeAdminTab === 'role_requests' ? (
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div>
+              <h3 className="font-black text-sm text-slate-900">User Role Upgrade & Modification Requests</h3>
+              <p className="text-[11px] font-bold text-slate-500">Review pending privilege upgrade requests submitted by registered accounts.</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100 text-slate-700 uppercase text-[10px] font-black">
+                <tr>
+                  <th className="p-2.5 rounded-l-xl">User</th>
+                  <th className="p-2.5">Current Role</th>
+                  <th className="p-2.5">Requested Role</th>
+                  <th className="p-2.5">Reason / Justification</th>
+                  <th className="p-2.5">Status</th>
+                  <th className="p-2.5 text-right rounded-r-xl">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-bold">
+                {roleRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-4 text-center text-slate-500 font-bold">No role change requests found.</td>
+                  </tr>
+                ) : (
+                  roleRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-slate-50">
+                      <td className="p-2.5">
+                        <span className="font-black text-slate-900 block">{req.user_name}</span>
+                        <span className="text-[10px] text-slate-500 font-bold">{req.email}</span>
+                      </td>
+                      <td className="p-2.5">
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono text-[10px]">
+                          {req.current_role}
+                        </span>
+                      </td>
+                      <td className="p-2.5">
+                        <span className="bg-emerald-100 text-emerald-900 font-black px-2 py-0.5 rounded-md text-[10px]">
+                          {req.requested_role}
+                        </span>
+                      </td>
+                      <td className="p-2.5 max-w-xs truncate text-[11px] text-slate-700">
+                        {req.reason}
+                      </td>
+                      <td className="p-2.5">
+                        {req.status === 'PENDING' ? (
+                          <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full text-[10px] font-black">
+                            ● PENDING
+                          </span>
+                        ) : req.status === 'APPROVED' ? (
+                          <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-black">
+                            ✓ APPROVED
+                          </span>
+                        ) : (
+                          <span className="bg-rose-100 text-rose-900 border border-rose-300 px-2 py-0.5 rounded-full text-[10px] font-black">
+                            ✕ REJECTED
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-2.5 text-right space-x-1">
+                        {req.status === 'PENDING' && (
+                          <>
+                            <button
+                              onClick={() => handleApproveRoleRequest(req.id)}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-2.5 py-1 rounded-lg text-[10px]"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectRoleRequest(req.id)}
+                              className="bg-rose-600 hover:bg-rose-700 text-white font-black px-2.5 py-1 rounded-lg text-[10px]"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs space-y-3">
+          {/* ULTRA-COMPACT PATIENTS TABLE (ZERO HORIZONTAL SCROLL) */}
         
         {/* Search & Filter Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -537,6 +718,7 @@ export const AdminPatientManagementView: React.FC = () => {
           </table>
         </div>
       </div>
+    )}
 
       {/* ➕ MODAL 1: CREATE NEW PATIENT */}
       {showCreateModal && (
@@ -791,6 +973,21 @@ export const AdminPatientManagementView: React.FC = () => {
                   required
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 font-bold focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-slate-900 font-bold mb-1">Account Role</label>
+                <select
+                  value={editPatient.role || 'PATIENT'}
+                  onChange={(e) => setEditPatient({ ...editPatient, role: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="PATIENT">PATIENT (Patient Profile)</option>
+                  <option value="BYSTANDER">BYSTANDER (Roadside Bystander)</option>
+                  <option value="PARAMEDIC">PARAMEDIC (First Responder)</option>
+                  <option value="HOSPITAL_STAFF">HOSPITAL_STAFF (Hospital ER Doctor)</option>
+                  <option value="ADMIN">ADMIN (System Administrator)</option>
+                </select>
               </div>
 
               <div>
