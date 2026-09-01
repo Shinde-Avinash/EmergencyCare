@@ -16,6 +16,7 @@ interface AuthUser {
   name: string;
   email: string;
   role: UserRole;
+  patient_id?: number;
 }
 
 interface EmergencyContextType {
@@ -32,12 +33,12 @@ interface EmergencyContextType {
   readiness: ReadinessScore | null;
   toastMessage: string | null;
   showToast: (msg: string) => void;
-  refreshData: () => Promise<void>;
+  refreshData: (pid?: number) => Promise<void>;
   updateIncidentStatus: (nextStatus: string, hospitalId?: number) => Promise<void>;
   
   // Auth & Sidebar state
   authUser: AuthUser | null;
-  loginUser: (email: string, role: UserRole, name?: string, token?: string) => void;
+  loginUser: (email: string, role: UserRole, name?: string, token?: string, patient_id?: number) => void;
   logoutUser: () => void;
   updatePatientProfile: (updatedData: Partial<PatientProfile>) => Promise<void>;
   isSidebarCollapsed: boolean;
@@ -125,11 +126,19 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loginUser = (email: string, role: UserRole, name: string = "Rahul Sharma", token: string = "demo_jwt_token") => {
-    const u: AuthUser = { id: 1, name, email, role };
+  const loginUser = (
+    email: string, 
+    role: UserRole, 
+    name?: string, 
+    token?: string,
+    patient_id?: number
+  ) => {
+    const actualName = name && name.trim() ? name : "User";
+    const pid = patient_id || 1;
+    const u: AuthUser = { id: 1, name: actualName, email, role, patient_id: pid };
     setAuthUser(u);
     setCurrentRole(role);
-    localStorage.setItem("emergencycare_jwt", token);
+    localStorage.setItem("emergencycare_jwt", token || "demo_jwt_token");
     localStorage.setItem("emergencycare_user", JSON.stringify(u));
 
     // Role-suited default tab routing
@@ -139,7 +148,10 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     else if (role === 'ADMIN') defaultTab = 'admin-patients';
 
     setActiveTab(defaultTab);
-    showToast(`✓ Welcome ${name}! Unlocked ${role} Portal.`);
+    showToast(`✓ Welcome ${actualName}! Unlocked ${role} Portal.`);
+
+    // Refresh patient data for this logged in user
+    refreshData(pid);
   };
 
   const logoutUser = () => {
@@ -151,18 +163,24 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     showToast("🔒 Security Session Closed.");
   };
 
-  const fetchPatientData = async () => {
+  const fetchPatientData = async (targetPatientId?: number) => {
+    const pid = targetPatientId || authUser?.patient_id || 1;
     try {
-      const res = await fetch('/api/patient/1');
+      const res = await fetch(`/api/patient/${pid}`);
       if (res.ok) {
         const data = await res.json();
         setPatient(data);
+        if (data.full_name && authUser && authUser.name !== data.full_name) {
+          const updated = { ...authUser, name: data.full_name };
+          setAuthUser(updated);
+          localStorage.setItem("emergencycare_user", JSON.stringify(updated));
+        }
       }
     } catch (e) {
       setPatient({
-        id: 1,
+        id: pid,
         emergency_id: "EMG-8942-X",
-        full_name: "Rahul Sharma",
+        full_name: authUser?.name || "Rahul Sharma",
         blood_group: "B+",
         dob: "1992-04-14",
         gender: "Male",
@@ -182,9 +200,10 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const fetchIdentity = async () => {
+  const fetchIdentity = async (targetPatientId?: number) => {
+    const pid = targetPatientId || authUser?.patient_id || 1;
     try {
-      const res = await fetch('/api/identity/1');
+      const res = await fetch(`/api/identity/${pid}`);
       if (res.ok) {
         const data = await res.json();
         setIdentity(data);
@@ -213,9 +232,10 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const fetchReadiness = async () => {
+  const fetchReadiness = async (targetPatientId?: number) => {
+    const pid = targetPatientId || authUser?.patient_id || 1;
     try {
-      const res = await fetch('/api/readiness/1');
+      const res = await fetch(`/api/readiness/${pid}`);
       if (res.ok) {
         const data = await res.json();
         setReadiness(data);
@@ -239,12 +259,50 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!patient) return;
     const newProfile = { ...patient, ...updatedData };
     setPatient(newProfile);
-    showToast("✓ Patient Emergency Profile updated!");
-    await fetchReadiness();
+
+    // Sync authUser.name if full_name was edited
+    if (updatedData.full_name && authUser) {
+      const updatedUser = { ...authUser, name: updatedData.full_name };
+      setAuthUser(updatedUser);
+      localStorage.setItem("emergencycare_user", JSON.stringify(updatedUser));
+    }
+
+    // Persist to backend database via PUT HTTP request
+    try {
+      const allergyStr = Array.isArray(updatedData.critical_allergies) 
+        ? updatedData.critical_allergies.join(", ") 
+        : (updatedData.critical_allergies || "");
+      const conditionStr = Array.isArray(updatedData.critical_conditions) 
+        ? updatedData.critical_conditions.join(", ") 
+        : (updatedData.critical_conditions || "");
+      const medStr = Array.isArray(updatedData.active_medications) 
+        ? updatedData.active_medications.join(", ") 
+        : (updatedData.active_medications || "");
+
+      const res = await fetch(`/api/patient/${patient.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: updatedData.full_name,
+          blood_group: updatedData.blood_group,
+          critical_allergies: allergyStr,
+          critical_conditions: conditionStr,
+          active_medications: medStr,
+          emergency_instructions: updatedData.emergency_instructions
+        })
+      });
+      if (res.ok) {
+        showToast("✓ Patient Profile saved to backend database!");
+      }
+    } catch (e) {
+      console.warn("Could not save profile to backend DB", e);
+    }
+
+    await fetchReadiness(patient.id);
   };
 
-  const refreshData = async () => {
-    await Promise.all([fetchPatientData(), fetchIdentity(), fetchActiveIncident(), fetchReadiness()]);
+  const refreshData = async (pid?: number) => {
+    await Promise.all([fetchPatientData(pid), fetchIdentity(pid), fetchActiveIncident(), fetchReadiness(pid)]);
   };
 
   const updateIncidentStatus = async (nextStatus: string, hospitalId?: number) => {
@@ -269,7 +327,15 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   useEffect(() => {
-    refreshData();
+    const savedUserStr = localStorage.getItem("emergencycare_user");
+    let pid = 1;
+    if (savedUserStr) {
+      try {
+        const u = JSON.parse(savedUserStr);
+        if (u && u.patient_id) pid = u.patient_id;
+      } catch (e) {}
+    }
+    refreshData(pid);
   }, []);
 
   return (

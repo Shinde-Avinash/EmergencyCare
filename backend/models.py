@@ -168,3 +168,16 @@ class CareCircleMember(Base):
     phone = Column(String(20), nullable=False)
     permission_tier = Column(String(50), default="EMERGENCY_NOTIFY") # FULL, EMERGENCY_NOTIFY, READ_ONLY
     notify_on_break_glass = Column(Boolean, default=True)
+
+class RoleUpdateRequest(Base):
+    __tablename__ = "role_update_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user_name = Column(String(100), nullable=False)
+    email = Column(String(100), nullable=False)
+    current_role = Column(String(50), nullable=False)
+    requested_role = Column(String(50), nullable=False)
+    reason = Column(Text, nullable=False)
+    status = Column(String(20), default="PENDING") # PENDING, APPROVED, REJECTED
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)

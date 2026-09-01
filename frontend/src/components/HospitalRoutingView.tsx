@@ -20,9 +20,13 @@ import {
   Search
 } from 'lucide-react';
 
-interface ExtendedHospital extends Hospital {
+interface ExtendedHospital extends Partial<Hospital> {
+  id: number;
+  name: string;
+  address: string;
   lat: number;
   lng: number;
+  [key: string]: any;
 }
 
 export const HospitalRoutingView: React.FC = () => {

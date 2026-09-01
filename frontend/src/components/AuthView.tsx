@@ -145,7 +145,13 @@ export const AuthView: React.FC = () => {
 
       if (res.ok) {
         const data = await res.json();
-        loginUser(data.user.email, data.user.role as UserRole, data.user.full_name, data.access_token);
+        loginUser(
+          data.user.email, 
+          data.user.role as UserRole, 
+          data.user.full_name, 
+          data.access_token,
+          data.user.patient_id
+        );
         setIsSubmitting(false);
       } else {
         const err = await res.json().catch(() => ({ detail: "Authentication failed." }));
@@ -319,21 +325,6 @@ export const AuthView: React.FC = () => {
                   placeholder="Enter password"
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:outline-none focus:border-slate-400"
                 />
-              </div>
-
-              <div>
-                <label className="block text-slate-900 font-bold mb-1">Account Role</label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:outline-none focus:border-slate-400 cursor-pointer"
-                >
-                  <option value="PATIENT">Patient Account</option>
-                  <option value="BYSTANDER">Bystander Account</option>
-                  <option value="PARAMEDIC">First Responder / Paramedic</option>
-                  <option value="HOSPITAL_STAFF">Hospital ER Doctor</option>
-                  <option value="ADMIN">Security Auditor</option>
-                </select>
               </div>
 
               <button

@@ -283,11 +283,11 @@ export const Navbar: React.FC = () => {
               <div className="bg-white p-1.5 rounded-xl border border-slate-200/80 flex items-center justify-between shadow-xs">
                 <div className="flex items-center space-x-1.5 overflow-hidden">
                   <div className="w-6 h-6 rounded-full bg-slate-900 text-white font-black text-[10px] flex items-center justify-center flex-shrink-0">
-                    {authUser?.name.charAt(0) || 'U'}
+                    {authUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="overflow-hidden">
                     <span className="font-black text-slate-900 text-[11px] block leading-tight truncate">
-                      {authUser?.name || 'Rahul Sharma'}
+                      {authUser?.name || 'User Account'}
                     </span>
                   </div>
                 </div>

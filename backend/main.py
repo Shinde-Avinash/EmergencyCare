@@ -109,6 +109,7 @@ def register_user(req: schemas.AuthRegisterRequest, db: Session = Depends(get_db
     db.add(identity)
     db.commit()
 
+    patient_id = profile.id
     token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role})
     return {
         "access_token": token,
@@ -117,7 +118,8 @@ def register_user(req: schemas.AuthRegisterRequest, db: Session = Depends(get_db
             "id": user.id,
             "full_name": user.full_name,
             "email": user.email,
-            "role": user.role
+            "role": user.role,
+            "patient_id": patient_id
         }
     }
 
@@ -129,6 +131,9 @@ def login_user(req: schemas.AuthLoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password. Access Denied.")
         
+    profile = db.query(models.PatientProfile).filter(models.PatientProfile.user_id == user.id).first()
+    patient_id = profile.id if profile else 1
+
     token = create_access_token({"sub": user.email, "user_id": user.id, "role": user.role})
     return {
         "access_token": token,
@@ -137,7 +142,8 @@ def login_user(req: schemas.AuthLoginRequest, db: Session = Depends(get_db)):
             "id": user.id,
             "full_name": user.full_name,
             "email": user.email,
-            "role": user.role
+            "role": user.role,
+            "patient_id": patient_id
         }
     }
 
@@ -145,6 +151,9 @@ def login_user(req: schemas.AuthLoginRequest, db: Session = Depends(get_db)):
 @app.get("/api/patient/{patient_id}")
 def get_patient_profile(patient_id: int = 1, db: Session = Depends(get_db)):
     profile = db.query(models.PatientProfile).filter(models.PatientProfile.id == patient_id).first()
+    if not profile:
+        # Fallback to first profile if specified ID not found
+        profile = db.query(models.PatientProfile).first()
     if not profile:
         raise HTTPException(status_code=404, detail="Patient profile not found")
     user = db.query(models.User).filter(models.User.id == profile.user_id).first()
@@ -177,6 +186,41 @@ def get_patient_profile(patient_id: int = 1, db: Session = Depends(get_db)):
         "ai_summary": ai_data["summary"],
         "ai_traceability": ai_data["traceability"]
     }
+
+@app.put("/api/patient/{patient_id}")
+def update_patient_profile(patient_id: int, req: schemas.AdminPatientUpdateRequest, db: Session = Depends(get_db)):
+    profile = db.query(models.PatientProfile).filter(models.PatientProfile.id == patient_id).first()
+    if not profile:
+        profile = db.query(models.PatientProfile).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Patient profile not found")
+    
+    if req.full_name is not None:
+        user = db.query(models.User).filter(models.User.id == profile.user_id).first()
+        if user:
+            user.full_name = req.full_name
+            
+    if req.blood_group is not None:
+        profile.blood_group = req.blood_group
+    if req.date_of_birth is not None:
+        profile.date_of_birth = req.date_of_birth
+    if req.gender is not None:
+        profile.gender = req.gender
+    if req.primary_language is not None:
+        profile.primary_language = req.primary_language
+    if req.organ_donor is not None:
+        profile.organ_donor = req.organ_donor
+    if req.critical_allergies is not None:
+        profile.critical_allergies = req.critical_allergies
+    if req.critical_conditions is not None:
+        profile.critical_conditions = req.critical_conditions
+    if req.active_medications is not None:
+        profile.active_medications = req.active_medications
+    if req.emergency_instructions is not None:
+        profile.emergency_instructions = req.emergency_instructions
+        
+    db.commit()
+    return {"message": "Patient profile updated successfully"}
 
 @app.get("/api/identity/{patient_id}")
 def get_emergency_identity(patient_id: int = 1, db: Session = Depends(get_db)):
@@ -550,6 +594,8 @@ def admin_update_patient(patient_id: int, req: schemas.AdminPatientUpdateRequest
         user.full_name = req.full_name
     if user and req.phone:
         user.phone = req.phone
+    if user and req.role:
+        user.role = req.role.upper()
 
     if req.blood_group is not None:
         profile.blood_group = req.blood_group
@@ -572,6 +618,71 @@ def admin_update_patient(patient_id: int, req: schemas.AdminPatientUpdateRequest
 
     db.commit()
     return {"message": "Patient updated successfully"}
+
+# --- ROLE UPDATE REQUEST ENDPOINTS ---
+@app.post("/api/role-update-request")
+def create_role_update_request(req: schemas.RoleUpdateRequestSchema, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == (req.user_id or 1)).first()
+    if not user:
+        user = db.query(models.User).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    role_req = models.RoleUpdateRequest(
+        user_id=user.id,
+        user_name=user.full_name,
+        email=user.email,
+        current_role=user.role,
+        requested_role=req.requested_role.upper(),
+        reason=req.reason,
+        status="PENDING"
+    )
+    db.add(role_req)
+    db.commit()
+    db.refresh(role_req)
+    return {"message": "Role update request submitted successfully", "request_id": role_req.id}
+
+@app.get("/api/admin/role-update-requests")
+def admin_get_role_update_requests(db: Session = Depends(get_db)):
+    reqs = db.query(models.RoleUpdateRequest).order_by(models.RoleUpdateRequest.id.desc()).all()
+    return [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "user_name": r.user_name,
+            "email": r.email,
+            "current_role": r.current_role,
+            "requested_role": r.requested_role,
+            "reason": r.reason,
+            "status": r.status,
+            "created_at": r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else ""
+        }
+        for r in reqs
+    ]
+
+@app.post("/api/admin/role-update-requests/{request_id}/approve")
+def admin_approve_role_update(request_id: int, db: Session = Depends(get_db)):
+    req_item = db.query(models.RoleUpdateRequest).filter(models.RoleUpdateRequest.id == request_id).first()
+    if not req_item:
+        raise HTTPException(status_code=404, detail="Role update request not found")
+        
+    user = db.query(models.User).filter(models.User.id == req_item.user_id).first()
+    if user:
+        user.role = req_item.requested_role
+        
+    req_item.status = "APPROVED"
+    db.commit()
+    return {"message": f"Role updated to {req_item.requested_role} successfully", "user_id": req_item.user_id, "new_role": req_item.requested_role}
+
+@app.post("/api/admin/role-update-requests/{request_id}/reject")
+def admin_reject_role_update(request_id: int, db: Session = Depends(get_db)):
+    req_item = db.query(models.RoleUpdateRequest).filter(models.RoleUpdateRequest.id == request_id).first()
+    if not req_item:
+        raise HTTPException(status_code=404, detail="Role update request not found")
+        
+    req_item.status = "REJECTED"
+    db.commit()
+    return {"message": "Role update request rejected"}
 
 @app.delete("/api/admin/patients/{patient_id}")
 def admin_delete_patient(patient_id: int, db: Session = Depends(get_db)):

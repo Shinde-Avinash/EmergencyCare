@@ -30,6 +30,7 @@ class AdminPatientCreateRequest(BaseModel):
 class AdminPatientUpdateRequest(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
+    role: Optional[str] = None
     blood_group: Optional[str] = None
     date_of_birth: Optional[str] = None
     gender: Optional[str] = None
@@ -39,6 +40,11 @@ class AdminPatientUpdateRequest(BaseModel):
     critical_conditions: Optional[str] = None
     active_medications: Optional[str] = None
     emergency_instructions: Optional[str] = None
+
+class RoleUpdateRequestSchema(BaseModel):
+    user_id: Optional[int] = 1
+    requested_role: str
+    reason: str
 
 class BreakGlassRequest(BaseModel):
     qr_token: str
