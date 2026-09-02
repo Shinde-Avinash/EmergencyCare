@@ -3,15 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EmergencyCare Pro — Intelligent Emergency Response Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>EmergencyCare — Intelligent Emergency Response & Patient Identity Platform</title>
+    <meta name="title" content="EmergencyCare — Intelligent Emergency Response & Patient Identity Platform" />
+    <meta name="description" content="EmergencyCare is an AI-powered emergency healthcare platform providing zero-data QR emergency identity cards, real-time hospital dispatch maps, patient health record management, and secure Break-Glass medical access for first responders." />
+    <meta name="keywords" content="EmergencyCare, emergency medical ID, break-glass access, hospital dispatch map, patient health records, QR emergency card, paramedic dispatch, ICU bed availability, ER navigation" />
+    <meta name="author" content="EmergencyCare Health Systems" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://emergencycare.app/" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://emergencycare.app/" />
+    <meta property="og:title" content="EmergencyCare — Intelligent Emergency Response Platform" />
+    <meta property="og:description" content="Zero-data QR identity cards, live hospital ER dispatch maps, Break-Glass emergency data access, and patient health record timeline." />
+    <meta property="og:image" content="https://emergencycare.app/og-preview.png" />
+    <meta property="og:site_name" content="EmergencyCare" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://emergencycare.app/" />
+    <meta name="twitter:title" content="EmergencyCare — Intelligent Emergency Response Platform" />
+    <meta name="twitter:description" content="AI-powered emergency response, hospital Leaflet dispatch routing, patient identity, and Break-Glass medical security." />
+    <meta name="twitter:image" content="https://emergencycare.app/og-preview.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Real OpenStreetMap Leaflet Map CSS & JS -->
+    <!-- OpenStreetMap Leaflet Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Structured Data Schema (JSON-LD) for Search Engine Optimization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MedicalWebPage",
+      "name": "EmergencyCare Intelligent Platform",
+      "url": "https://emergencycare.app",
+      "description": "Intelligent emergency response and patient identity platform featuring zero-raw-data QR code medical identity cards, Leaflet ER dispatch routing, and patient health record timeline.",
+      "medicalAudience": {
+        "@type": "MedicalAudience",
+        "audienceType": ["Patient", "Paramedic", "Physician", "First Responder", "Hospital Staff"]
+      },
+      "aspect": ["Emergency Medical Identity", "Hospital Routing", "Break-Glass Security", "Patient Health Records"]
+    }
+    </script>
   </head>
   <body class="bg-[#d6e6e3] text-slate-900 font-sans antialiased selection:bg-rose-600 selection:text-white min-h-screen">
     <div id="root"></div>

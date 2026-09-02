@@ -493,7 +493,7 @@ export const HospitalRoutingView: React.FC = () => {
             <Building2 className="w-4 h-4 text-emerald-600" />
             <span>REAL OPENSTREETMAP GPS ENGINE & SEARCH</span>
           </div>
-          <h2 className="text-2xl font-black text-slate-900">Hospital Destination & Dispatch Map</h2>
+          <h2 className="text-2xl font-black text-slate-900">Nearest Emergency Hospitals & Dispatch Map</h2>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
             Auto-detects your real device GPS coordinates or search any location in the world using OpenStreetMap Nominatim.
           </p>

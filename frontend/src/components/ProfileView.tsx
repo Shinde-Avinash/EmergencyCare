@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useEmergency } from '../context/EmergencyContext';
+import { generateFHIRR4Bundle, downloadFHIRJson } from '../utils/fhirExporter';
+import { PrintableEmergencyCard } from './PrintableEmergencyCard';
 import { 
   User, 
   Heart, 
@@ -11,7 +13,8 @@ import {
   Activity,
   ArrowRight,
   X,
-  Send
+  Send,
+  Download
 } from 'lucide-react';
 
 export const ProfileView: React.FC = () => {
@@ -24,6 +27,9 @@ export const ProfileView: React.FC = () => {
   const [medications, setMedications] = useState(patient?.active_medications ? patient.active_medications.join(', ') : '');
   const [instructions, setInstructions] = useState(patient?.emergency_instructions || '');
   const [isSaving, setIsSaving] = useState(false);
+
+  // FHIR Export State
+  const [showFhirModal, setShowFhirModal] = useState(false);
 
   // Role Request State
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -111,7 +117,15 @@ export const ProfileView: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowFhirModal(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02]"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span>Export HL7 FHIR R4 Bundle 🏥</span>
+          </button>
+
           <button
             onClick={() => setShowRoleModal(true)}
             className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02]"
@@ -229,6 +243,55 @@ export const ProfileView: React.FC = () => {
         </div>
       </div>
 
+      {/* Health Tests & Hospital Reports Section */}
+      <div className="bg-white border border-slate-200 p-6 sm:p-8 rounded-3xl space-y-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
+          <div>
+            <h3 className="font-black text-lg text-slate-900 flex items-center space-x-2">
+              <FileText className="w-5 h-5 text-emerald-600" />
+              <span>My Health Tests & Hospital Reports</span>
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Upload laboratory blood reports, radiology scans, prescriptions, and hospital discharge summaries.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('records')}
+            className="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02] self-start sm:self-center"
+          >
+            <FileText className="w-4 h-4 text-emerald-400" />
+            <span>Add New Test / Report 📄</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+          <div 
+            onClick={() => setActiveTab('records')}
+            className="bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-slate-400 cursor-pointer space-y-1.5"
+          >
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="font-black text-emerald-700 uppercase bg-emerald-100 px-2 py-0.5 rounded">Lab Report</span>
+              <span className="text-slate-400 font-bold">Verified</span>
+            </div>
+            <h4 className="font-black text-slate-900 text-sm">Complete Blood Count & Allergy Screen</h4>
+            <p className="text-[11px] text-slate-600 font-medium">IgE Panel: High Penicillin sensitivity flagged. Hemoglobin: 14.2 g/dL.</p>
+          </div>
+
+          <div 
+            onClick={() => setActiveTab('records')}
+            className="bg-slate-50 p-4 rounded-2xl border border-slate-200 hover:border-slate-400 cursor-pointer space-y-1.5"
+          >
+            <div className="flex justify-between items-center text-[10px]">
+              <span className="font-black text-blue-700 uppercase bg-blue-100 px-2 py-0.5 rounded">Discharge Summary</span>
+              <span className="text-slate-400 font-bold">Verified</span>
+            </div>
+            <h4 className="font-black text-slate-900 text-sm">Pulmonology Spirometry & Consultation</h4>
+            <p className="text-[11px] text-slate-600 font-medium">Diagnosis: Moderate Persistent Asthma. Spirometry FEV1: 72%.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Role Update Request Modal */}
       {showRoleModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
@@ -308,6 +371,73 @@ export const ProfileView: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Printable Emergency Wallet Card */}
+      <div className="pt-4 border-t border-slate-200">
+        <PrintableEmergencyCard patient={patient} />
+      </div>
+
+      {/* HL7 FHIR R4 EXPORT MODAL DIALOG */}
+      {showFhirModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                  🏥
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">HL7 FHIR R4 Standard Medical Data Bundle</h3>
+                  <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">INTEROPERABLE EHR SPECIFICATION (EPIC / CERNER COMPATIBLE)</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowFhirModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 font-medium">
+              This bundle conforms to <strong>HL7 FHIR Release 4</strong> specification, grouping Patient demographic resources, active AllergyIntolerance items, Condition problem lists, and ABO/Rh Observation objects.
+            </p>
+
+            <div className="bg-slate-900 text-emerald-400 p-4 rounded-2xl font-mono text-[11px] max-h-72 overflow-y-auto leading-relaxed border border-slate-800 shadow-inner">
+              <pre>{JSON.stringify(generateFHIRR4Bundle(patient), null, 2)}</pre>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+              <span className="text-[10px] text-slate-500 font-mono font-bold">Format: application/fhir+json</span>
+
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setShowFhirModal(false)}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold px-4 py-2 rounded-xl text-xs"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const bundle = generateFHIRR4Bundle(patient);
+                    downloadFHIRJson(bundle, `fhir_r4_patient_${patient?.id || 1}.json`);
+                    showToast("✓ Downloaded HL7 FHIR R4 JSON Bundle!");
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-5 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-sm"
+                >
+                  <Download className="w-4 h-4 text-white" />
+                  <span>Download FHIR JSON File 💾</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

@@ -388,8 +388,9 @@ def acknowledge_handoff(req: schemas.HandoffAcknowledgeRequest, db: Session = De
 def upload_simulated_document(req: schemas.DocumentUploadSimulationRequest, db: Session = Depends(get_db)):
     ocr_result = process_medical_document_ocr(req.title, req.doc_type, req.sample_content)
 
+    pid = req.patient_id if req.patient_id else 1
     doc = models.MedicalDocument(
-        patient_id=1,
+        patient_id=pid,
         title=req.title,
         doc_type=req.doc_type,
         ocr_raw_text=req.sample_content,
@@ -412,8 +413,28 @@ def list_patient_documents(patient_id: int = 1, db: Session = Depends(get_db)):
         "confidence_score": d.confidence_score,
         "upload_date": d.upload_date.strftime("%Y-%m-%d"),
         "verification_status": d.verification_status,
-        "preview": d.ocr_raw_text[:120] if d.ocr_raw_text else ""
+        "preview": d.ocr_raw_text if d.ocr_raw_text else ""
     } for d in docs]
+
+@app.put("/api/documents/{doc_id}")
+def update_medical_document(doc_id: int, req: schemas.DocumentUploadSimulationRequest, db: Session = Depends(get_db)):
+    doc = db.query(models.MedicalDocument).filter(models.MedicalDocument.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    doc.title = req.title
+    doc.doc_type = req.doc_type
+    doc.ocr_raw_text = req.sample_content
+    db.commit()
+    db.refresh(doc)
+    return {"status": "UPDATED", "id": doc.id}
+
+@app.delete("/api/documents/{doc_id}")
+def delete_medical_document(doc_id: int, db: Session = Depends(get_db)):
+    doc = db.query(models.MedicalDocument).filter(models.MedicalDocument.id == doc_id).first()
+    if doc:
+        db.delete(doc)
+        db.commit()
+    return {"status": "DELETED", "id": doc_id}
 
 # --- Module 13, 14, 15: Tamper-Evident Audit & Security ---
 @app.get("/api/audit/logs")
