@@ -11,6 +11,7 @@
 ---
 
 ## 📋 Table of Contents
+<img width="1349" height="595" alt="image" src="https://github.com/user-attachments/assets/c064af5e-fed8-402e-9987-5cb475b9fa5a" />
 
 - [Overview](#-overview)
 - [System Architecture & Key Modules](#-system-architecture--key-modules)
