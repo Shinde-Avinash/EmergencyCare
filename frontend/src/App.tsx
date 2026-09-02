@@ -45,9 +45,9 @@ const AuthenticatedAppLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#d6e6e3] text-slate-900 font-sans p-3 sm:p-6 flex justify-center items-start">
+    <div className="min-h-screen bg-[#d6e6e3] text-slate-900 font-sans p-2 sm:p-4 lg:p-6 flex justify-center items-start">
       {/* Floating Healthcare Frame matching Reference UI */}
-      <div className="w-full max-w-7xl bg-[#ebf3f1] rounded-[32px] p-4 sm:p-6 shadow-xl border border-[#d3e4e0]/60 flex flex-col lg:flex-row gap-6 min-h-[92vh]">
+      <div className="w-full max-w-7xl bg-[#ebf3f1] rounded-2xl sm:rounded-[32px] p-3 sm:p-5 lg:p-6 shadow-xl border border-[#d3e4e0]/60 flex flex-col lg:flex-row gap-4 lg:gap-6 min-h-[92vh]">
         <Navbar />
         <MainContent />
       </div>

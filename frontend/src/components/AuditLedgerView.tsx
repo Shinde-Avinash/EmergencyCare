@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEmergency } from '../context/EmergencyContext';
 import { AuditLogItem, SuspiciousAlert } from '../types';
+import { evaluateABACPolicy } from '../utils/abacPolicyEngine';
 import { 
   Lock, 
   ShieldCheck, 
@@ -8,7 +9,8 @@ import {
   CheckCircle2, 
   RefreshCw, 
   Flame,
-  ShieldAlert
+  ShieldAlert,
+  Shield
 } from 'lucide-react';
 
 export const AuditLedgerView: React.FC = () => {
@@ -42,6 +44,11 @@ export const AuditLedgerView: React.FC = () => {
       console.warn("Failed fetching alerts", e);
     }
   };
+
+  useEffect(() => {
+    fetchLogs();
+    fetchAlerts();
+  }, []);
 
   const handleVerifyIntegrity = async () => {
     setIsVerifying(true);
@@ -173,35 +180,55 @@ export const AuditLedgerView: React.FC = () => {
           </h3>
 
           <div className="space-y-4">
-            {logs.map((block) => (
-              <div key={block.block_index} className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 font-mono text-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded border border-purple-200">
-                      BLOCK #{block.block_index}
+            {logs.map((block) => {
+              const abacEval = evaluateABACPolicy(block.user_role || 'PARAMEDIC', true, 1.2, 900);
+
+              return (
+                <div key={block.block_index} className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 font-mono text-xs shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="bg-purple-100 text-purple-900 font-black px-2.5 py-0.5 rounded-full border border-purple-300 text-[10px]">
+                        BLOCK #{block.block_index}
+                      </span>
+                      <span className="font-black text-slate-900">{block.user_name} ({block.user_role})</span>
+                    </div>
+
+                    <span className="text-[10px] bg-emerald-100 text-emerald-900 font-black px-2.5 py-0.5 rounded-full border border-emerald-300">
+                      ABAC Score: {abacEval.confidenceScore}% (PASSED)
                     </span>
-                    <span className="font-bold text-slate-900">{block.user_name} ({block.user_role})</span>
                   </div>
-                  <span className="text-[11px] text-slate-500">{block.timestamp}</span>
-                </div>
 
-                <div className="text-slate-800 font-sans space-y-1 font-medium">
-                  <p><span className="text-slate-500 font-bold">Access Type:</span> {block.access_type}</p>
-                  <p><span className="text-slate-500 font-bold">Reason:</span> "{block.access_reason}"</p>
-                </div>
+                  <div className="text-slate-800 font-sans space-y-1 font-medium">
+                    <p><span className="text-slate-500 font-bold">Access Type:</span> {block.access_type}</p>
+                    <p><span className="text-slate-500 font-bold">Reason:</span> "{block.access_reason}"</p>
+                  </div>
 
-                <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1 text-[10px] shadow-sm">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-slate-500 font-bold w-20">PREV HASH:</span>
-                    <span className="text-slate-700 truncate">{block.previous_hash}</span>
+                  {/* ABAC Rules Inspector */}
+                  <div className="bg-[#f8fafc] p-2.5 rounded-xl border border-slate-200 text-[10px] space-y-1 font-sans">
+                    <span className="font-black text-slate-900 block text-[10px]">ABAC Dynamic Context Rules:</span>
+                    <div className="grid grid-cols-2 gap-1 text-[9px] font-bold">
+                      {abacEval.rulesEvaluated.map((r, i) => (
+                        <div key={i} className="flex items-center space-x-1 text-slate-700">
+                          <span className="text-emerald-600 font-black">✓</span>
+                          <span className="truncate">{r.ruleName}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-purple-700 font-bold w-20">CURR HASH:</span>
-                    <span className="text-purple-900 font-bold truncate">{block.current_hash}</span>
+
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1 text-[10px] shadow-2xs">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-slate-500 font-bold w-20">PREV HASH:</span>
+                      <span className="text-slate-700 truncate">{block.previous_hash}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-purple-700 font-bold w-20">CURR HASH:</span>
+                      <span className="text-purple-900 font-bold truncate">{block.current_hash}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

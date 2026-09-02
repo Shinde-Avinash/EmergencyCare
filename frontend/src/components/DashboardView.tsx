@@ -15,7 +15,10 @@ import {
   Calendar as CalendarIcon, 
   CheckCircle2, 
   Trash2,
-  Stethoscope
+  Stethoscope,
+  Building2,
+  MapPin,
+  Navigation
 } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
@@ -423,6 +426,74 @@ export const DashboardView: React.FC = () => {
 
         </div>
 
+      </div>
+
+      {/* 5. FEATURED NEAREST HOSPITALS MAP CARD FOR PATIENTS */}
+      <div className="bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#0284c7] text-white p-6 rounded-3xl shadow-lg border border-slate-700/80 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/30 flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping mr-1" />
+                GPS LEAFLET MAP ENGINE READY
+              </span>
+            </div>
+            <h3 className="text-xl font-black tracking-tight flex items-center space-x-2">
+              <Building2 className="w-5 h-5 text-emerald-400" />
+              <span>Nearest Emergency Hospitals & ER Map</span>
+            </h3>
+            <p className="text-xs text-slate-300 font-medium">
+              Real-time location detection, Level-1 trauma ICU bed availability, and interactive navigation routing.
+            </p>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('hospitals')}
+            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-5 py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-all transform hover:scale-[1.02] self-start sm:self-center"
+          >
+            <Navigation className="w-4 h-4" />
+            <span>Open Nearest Hospitals Map 🗺️</span>
+          </button>
+        </div>
+
+        {/* Quick Nearest Hospital Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+          <div 
+            onClick={() => setActiveTab('hospitals')}
+            className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:border-emerald-400/50 cursor-pointer transition-all hover:bg-white/15"
+          >
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="font-black text-emerald-400 text-[10px] uppercase">★ 2.4 km away</span>
+              <span className="bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full font-bold text-[10px]">6 min ETA</span>
+            </div>
+            <h4 className="font-black text-sm text-white">Apex Level-1 Trauma Center</h4>
+            <p className="text-[11px] text-slate-300 font-medium mt-0.5">FC Road, Pune • 4 ICU Beds</p>
+          </div>
+
+          <div 
+            onClick={() => setActiveTab('hospitals')}
+            className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:border-emerald-400/50 cursor-pointer transition-all hover:bg-white/15"
+          >
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="font-black text-slate-300 text-[10px] uppercase">3.2 km away</span>
+              <span className="bg-slate-700/60 text-slate-200 px-2 py-0.5 rounded-full font-bold text-[10px]">8 min ETA</span>
+            </div>
+            <h4 className="font-black text-sm text-white">Sahyadri Super Specialty</h4>
+            <p className="text-[11px] text-slate-300 font-medium mt-0.5">Deccan, Pune • 3 ICU Beds</p>
+          </div>
+
+          <div 
+            onClick={() => setActiveTab('hospitals')}
+            className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 hover:border-emerald-400/50 cursor-pointer transition-all hover:bg-white/15"
+          >
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="font-black text-slate-300 text-[10px] uppercase">3.9 km away</span>
+              <span className="bg-slate-700/60 text-slate-200 px-2 py-0.5 rounded-full font-bold text-[10px]">11 min ETA</span>
+            </div>
+            <h4 className="font-black text-sm text-white">KEM Hospital & Research</h4>
+            <p className="text-[11px] text-slate-300 font-medium mt-0.5">Rasta Peth, Pune • 5 ICU Beds</p>
+          </div>
+        </div>
       </div>
 
       {/* BOOK NEW APPOINTMENT MODAL DIALOG */}

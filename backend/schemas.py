@@ -93,6 +93,7 @@ class DocumentUploadSimulationRequest(BaseModel):
     title: str
     doc_type: str # Prescription, Discharge Summary, Lab Report, CT/MRI
     sample_content: str
+    patient_id: Optional[int] = 1
 
 class HandoffAcknowledgeRequest(BaseModel):
     incident_code: str

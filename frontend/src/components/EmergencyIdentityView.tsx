@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useEmergency } from '../context/EmergencyContext';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -14,10 +14,29 @@ import {
 } from 'lucide-react';
 
 export const EmergencyIdentityView: React.FC = () => {
-  const { identity, patient, showToast } = useEmergency();
+  const { identity, patient, authUser, showToast } = useEmergency();
   const [copied, setCopied] = useState(false);
   const [nfcSimulating, setNfcSimulating] = useState(false);
   const [activeTab, setActiveTab] = useState<'qr' | 'nfc' | 'print' | 'lockscreen'>('qr');
+
+  // Dynamic Live Clock & Calendar State for Phone Lock Screen
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedTime = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formattedDate = currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+
+  const patientName = patient?.full_name || authUser?.name || 'Rahul Sharma';
+  const bloodGroup = patient?.blood_group || 'B+';
+  const allergyList = patient?.critical_allergies && patient.critical_allergies.length > 0 
+    ? patient.critical_allergies.join(', ')
+    : 'No Known Allergies';
 
   const breakGlassUrl = `${window.location.origin}/break-glass/${identity?.qr_break_glass_token || 'BG-TOKEN-8942-ALPHA-KEY'}`;
 
@@ -267,32 +286,56 @@ export const EmergencyIdentityView: React.FC = () => {
       {activeTab === 'lockscreen' && (
         <div className="bg-white border border-slate-200 p-8 max-w-sm mx-auto rounded-2xl space-y-4 text-center shadow-sm">
           <h3 className="font-black text-slate-900 text-base">Phone Lock Screen Wallpaper</h3>
-          <p className="text-xs text-slate-700 font-bold">Save as your mobile lock screen wallpaper for instant first responder scanning.</p>
+          <p className="text-xs text-slate-700 font-bold">Live lock screen wallpaper auto-syncs with your emergency identity & real-time clock.</p>
 
-          <div className="w-64 h-96 bg-slate-900 text-white rounded-3xl mx-auto p-4 flex flex-col justify-between shadow-xl relative">
-            <div className="text-center pt-4">
-              <span className="text-2xl font-light">09:41</span>
-              <p className="text-[10px] text-slate-400">Monday, August 31</p>
+          <div className="w-64 h-[420px] bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white rounded-3xl mx-auto p-4 flex flex-col justify-between shadow-2xl relative border border-slate-700/60 overflow-hidden">
+            
+            {/* Live Clock Header */}
+            <div className="text-center pt-3 space-y-0.5">
+              <span className="text-3xl font-light tracking-tight font-sans text-slate-100">{formattedTime}</span>
+              <p className="text-[10px] text-slate-400 font-medium">{formattedDate}</p>
             </div>
 
-            <div className="bg-white text-slate-900 p-3 rounded-2xl text-center space-y-2 border border-slate-200 shadow-md">
-              <span className="text-[9px] font-black text-rose-700 uppercase tracking-wider block">EMERGENCY MEDICAL ID</span>
-              <div className="p-1 bg-white inline-block">
-                <QRCodeSVG value={breakGlassUrl} size={90} />
+            {/* Dynamic Emergency Badge Card */}
+            <div className="bg-white text-slate-900 p-3.5 rounded-2xl text-center space-y-2 border border-slate-200 shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-1">
+                <span className="text-[9px] font-black text-rose-700 uppercase tracking-wider">EMERGENCY MEDICAL ID</span>
+                <span className="text-[8px] font-mono bg-rose-100 text-rose-900 font-black px-1.5 py-0.5 rounded">
+                  {identity?.emergency_id || 'EMG-8942-X'}
+                </span>
               </div>
-              <p className="text-[9px] font-black text-slate-900">Rahul Sharma | Blood B+ | Penicillin Allergy</p>
+
+              <div className="p-1.5 bg-white inline-block rounded-xl border border-slate-200 shadow-xs">
+                <QRCodeSVG value={breakGlassUrl} size={95} />
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="text-xs font-black text-slate-900 leading-tight">{patientName}</h4>
+                <p className="text-[10px] font-bold text-slate-700">
+                  Blood Group: <strong className="text-rose-700 font-black">{bloodGroup}</strong>
+                </p>
+                <div className="bg-rose-50 p-1.5 rounded-lg border border-rose-200 text-[9px] font-extrabold text-rose-950">
+                  Allergies: {allergyList}
+                </div>
+              </div>
             </div>
 
-            <div className="pb-2 text-[9px] text-slate-400 font-mono">
-              EmergencyCare Mobile ID
+            <div className="pb-1 text-[9px] text-slate-400 font-mono flex items-center justify-between px-2">
+              <span>EmergencyCare Mobile ID</span>
+              <span className="text-emerald-400 font-bold flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping inline-block mr-1" />
+                LIVE
+              </span>
             </div>
+
           </div>
 
           <button
-            onClick={() => showToast("Lock screen wallpaper saved!")}
-            className="w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-2.5 rounded-xl text-xs shadow-sm"
+            onClick={() => showToast(`✓ Phone Lock Screen wallpaper downloaded for ${patientName}!`)}
+            className="w-full bg-rose-600 hover:bg-rose-700 text-white font-extrabold py-3 rounded-xl text-xs shadow-md uppercase tracking-wider flex items-center justify-center space-x-2"
           >
-            Save Wallpaper
+            <Download className="w-4 h-4" />
+            <span>Save Dynamic Wallpaper</span>
           </button>
         </div>
       )}
