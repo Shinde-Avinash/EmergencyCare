@@ -1,0 +1,17 @@
+{
+  "short_name": "EmergencyCare",
+  "name": "EmergencyCare — Intelligent Emergency Response Platform",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#dc2626",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "Privacy-First Emergency Healthcare Coordination & Care Continuity Platform"
+}

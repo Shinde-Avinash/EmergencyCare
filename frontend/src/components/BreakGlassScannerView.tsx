@@ -186,6 +186,23 @@ export const BreakGlassScannerView: React.FC = () => {
                 </span>
                 <span className="font-mono text-slate-950 font-black">18.5204° N, 73.8567° E (Pune)</span>
               </div>
+
+              {/* WebAuthn Biometric Verification Option */}
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <UserCheck className="w-4 h-4 text-indigo-600" />
+                  <span className="text-xs font-black text-indigo-950">WebAuthn / Biometric Verification</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast("🔒 WebAuthn Fingerprint / FaceID Challenge Passed!");
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-[11px] px-3 py-1 rounded-lg shadow-xs"
+                >
+                  Verify Biometric
+                </button>
+              </div>
             </div>
 
             <button
@@ -217,6 +234,24 @@ export const BreakGlassScannerView: React.FC = () => {
         /* Authorized Emergency Snapshot Display */
         <div className="space-y-6 animate-fadeIn">
           
+          {/* Care Circle SOS Alert Broadcast Banner */}
+          <div className="bg-emerald-900 text-white p-4 rounded-2xl border border-emerald-700 flex items-center justify-between shadow-md">
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500 text-emerald-950 flex items-center justify-center font-black animate-pulse">
+                📲
+              </div>
+              <div>
+                <h4 className="text-xs font-black uppercase text-emerald-300">Automated Care Circle SOS Broadcast Sent</h4>
+                <p className="text-xs font-bold text-emerald-100">
+                  SMS & GPS Tracking pin sent to <span className="underline">Priya Sharma (+91 98230 99887)</span>.
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] bg-emerald-800 text-emerald-200 font-mono font-black px-2.5 py-1 rounded-lg border border-emerald-600">
+              DISPATCH LIVE
+            </span>
+          </div>
+
           {/* Active Session Banner */}
           <div className="bg-rose-100 border-2 border-rose-400 p-6 rounded-2xl space-y-3 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

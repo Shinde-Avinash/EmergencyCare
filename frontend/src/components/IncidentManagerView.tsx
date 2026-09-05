@@ -15,7 +15,57 @@ import {
 } from 'lucide-react';
 
 export const IncidentManagerView: React.FC = () => {
-  const { activeIncident, updateIncidentStatus, showToast, setActiveTab } = useEmergency();
+  const { activeIncident, updateIncidentStatus, showToast, setActiveTab, patient } = useEmergency();
+
+  // Uplift Feature States: NEWS2 Calculator & PDF Export Modal
+  const [showNews2Modal, setShowNews2Modal] = React.useState(false);
+  const [respRate, setRespRate] = React.useState(18);
+  const [sp02, setSp02] = React.useState(97);
+  const [systolicBp, setSystolicBp] = React.useState(115);
+  const [pulseRate, setPulseRate] = React.useState(82);
+  const [temp, setTemp] = React.useState(37.1);
+  const [consciousness, setConsciousness] = React.useState('ALERT');
+  const [news2Result, setNews2Result] = React.useState<any>(null);
+
+  const calculateNews2Local = () => {
+    let score = 0;
+    if (respRate <= 8 || respRate >= 25) score += 3;
+    else if (respRate >= 21) score += 2;
+    else if (respRate <= 11) score += 1;
+
+    if (sp02 <= 91) score += 3;
+    else if (sp02 <= 93) score += 2;
+    else if (sp02 <= 95) score += 1;
+
+    if (systolicBp <= 90 || systolicBp >= 220) score += 3;
+    else if (systolicBp <= 100) score += 2;
+    else if (systolicBp <= 110) score += 1;
+
+    if (pulseRate <= 40 || pulseRate >= 131) score += 3;
+    else if (pulseRate >= 111) score += 2;
+    else if (pulseRate <= 50 || pulseRate >= 91) score += 1;
+
+    if (consciousness !== 'ALERT') score += 3;
+    if (temp <= 35.0) score += 3;
+    else if (temp >= 39.1) score += 2;
+
+    const risk = score >= 7 ? 'HIGH' : (score >= 5 ? 'MEDIUM' : 'LOW');
+    setNews2Result({
+      score,
+      risk,
+      recommendation: score >= 7 
+        ? 'EMERGENCY RESPONSE: Immediate ICU/Trauma specialist transfer!' 
+        : (score >= 5 ? 'Urgent clinical review by ER doctor.' : 'Standard ward-level monitoring.')
+    });
+    showToast(`Calculated NEWS2 Score: ${score} (${risk} Risk)`);
+  };
+
+  const handleExportClinicalPDF = () => {
+    showToast("📄 Generating Clinical Handoff PDF Summary...");
+    setTimeout(() => {
+      window.print();
+    }, 600);
+  };
 
   const statesOrder: IncidentStatus[] = [
     'CREATED',
@@ -66,9 +116,26 @@ export const IncidentManagerView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <div className="bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-xs">
-            <span className="text-slate-400 block font-medium">Current State:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* NEWS2 Calculator Button */}
+          <button
+            onClick={() => setShowNews2Modal(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md"
+          >
+            <span>🤖 NEWS2 Triage Score</span>
+          </button>
+
+          {/* Export PDF Button */}
+          <button
+            onClick={handleExportClinicalPDF}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center space-x-1.5 shadow-md"
+          >
+            <FileCheck className="w-4 h-4" />
+            <span>Export Clinical PDF</span>
+          </button>
+
+          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+            <span className="text-slate-400 block font-medium text-[10px]">Current State:</span>
             <span className="font-bold text-amber-400 uppercase tracking-wide">
               {activeIncident?.status.replace(/_/g, ' ')}
             </span>
@@ -79,7 +146,7 @@ export const IncidentManagerView: React.FC = () => {
               onClick={handleAdvanceState}
               className="bg-gradient-to-r from-rose-500 to-rose-700 hover:from-rose-600 hover:to-rose-800 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-rose-900/40 flex items-center space-x-1.5 transition-all"
             >
-              <span>Advance to {statesOrder[currentIdx + 1].replace(/_/g, ' ')}</span>
+              <span>Advance State</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
@@ -232,6 +299,112 @@ export const IncidentManagerView: React.FC = () => {
         </div>
 
       </div>
+
+      {/* NEWS2 Calculator Modal */}
+      {showNews2Modal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 space-y-5 shadow-2xl text-white">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="text-xl">🤖</span>
+                <h3 className="font-extrabold text-lg text-white">NEWS2 Clinical Triage Score Engine</h3>
+              </div>
+              <button 
+                onClick={() => setShowNews2Modal(false)}
+                className="text-slate-400 hover:text-white font-black text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-xs font-bold">
+              <div>
+                <label className="text-slate-400 block mb-1">Respiratory Rate (breaths/min)</label>
+                <input
+                  type="number"
+                  value={respRate}
+                  onChange={e => setRespRate(parseInt(e.target.value) || 12)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">SpO2 Oxygen Saturation (%)</label>
+                <input
+                  type="number"
+                  value={sp02}
+                  onChange={e => setSp02(parseFloat(e.target.value) || 98)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Systolic Blood Pressure (mmHg)</label>
+                <input
+                  type="number"
+                  value={systolicBp}
+                  onChange={e => setSystolicBp(parseInt(e.target.value) || 120)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Pulse Heart Rate (bpm)</label>
+                <input
+                  type="number"
+                  value={pulseRate}
+                  onChange={e => setPulseRate(parseInt(e.target.value) || 75)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Consciousness Level</label>
+                <select
+                  value={consciousness}
+                  onChange={e => setConsciousness(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                >
+                  <option value="ALERT">ALERT (Alert & Responsive)</option>
+                  <option value="CONFUSED">CONFUSED / VOICE / PAIN / UNRESPONSIVE</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Temperature (°C)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={temp}
+                  onChange={e => setTemp(parseFloat(e.target.value) || 37.0)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={calculateNews2Local}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl shadow-md text-xs uppercase tracking-wider"
+            >
+              Calculate NEWS2 Score & Clinical Protocol
+            </button>
+
+            {news2Result && (
+              <div className={`p-4 rounded-2xl border text-xs space-y-1.5 ${
+                news2Result.risk === 'HIGH' 
+                  ? 'bg-rose-950/60 border-rose-600 text-rose-200' 
+                  : (news2Result.risk === 'MEDIUM' ? 'bg-amber-950/60 border-amber-600 text-amber-200' : 'bg-emerald-950/60 border-emerald-600 text-emerald-200')
+              }`}>
+                <div className="flex items-center justify-between font-black text-sm">
+                  <span>NEWS2 SCORE: {news2Result.score}</span>
+                  <span className="uppercase px-2 py-0.5 rounded bg-black/40">{news2Result.risk} RISK</span>
+                </div>
+                <p className="font-bold text-[11px] leading-relaxed">{news2Result.recommendation}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

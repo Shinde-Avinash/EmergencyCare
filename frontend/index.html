@@ -58,5 +58,14 @@
   <body class="bg-[#d6e6e3] text-slate-900 font-sans antialiased selection:bg-rose-600 selection:text-white min-h-screen">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('[PWA] ServiceWorker registered with scope:', reg.scope))
+            .catch(err => console.log('[PWA] ServiceWorker registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>

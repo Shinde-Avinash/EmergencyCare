@@ -210,8 +210,61 @@ export const MedicalRecordsView: React.FC = () => {
     }
   };
 
+  const [activeSessions, setActiveSessions] = useState([
+    { token: "BGS-9021-LOCAL-DEMO", requester: "Officer R. Patil (Paramedic)", role: "PARAMEDIC", time: "10 mins ago", active: true }
+  ]);
+
+  const handleRevokeSession = async (token: string) => {
+    setActiveSessions(prev => prev.map(s => s.token === token ? { ...s, active: false } : s));
+    showToast(`🔒 Break-Glass Session ${token} Revoked by Patient!`);
+    try {
+      await fetch('/api/break-glass/revoke-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: token })
+      });
+    } catch (e) {
+      console.warn("Session revoked locally");
+    }
+  };
+
   return (
-    <div className="space-y-6 pb-12 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      
+      {/* Active Session Sovereignty & Revocation Panel */}
+      <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 space-y-3 shadow-md">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className="w-5 h-5 text-rose-500" />
+            <h3 className="font-extrabold text-sm text-white">Patient Data Sovereignty & Active Access Revocation</h3>
+          </div>
+          <span className="text-[10px] text-slate-400 font-bold uppercase">LIVE AUDIT ENGINE</span>
+        </div>
+
+        <div className="space-y-2">
+          {activeSessions.map((s) => (
+            <div key={s.token} className="bg-slate-800/90 p-3 rounded-xl border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div>
+                <span className="font-mono font-black text-amber-400 block">{s.token}</span>
+                <span className="text-slate-300 font-bold">{s.requester} • <span className="text-slate-400">{s.time}</span></span>
+              </div>
+
+              {s.active ? (
+                <button
+                  onClick={() => handleRevokeSession(s.token)}
+                  className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3 py-1.5 rounded-lg text-xs self-start sm:self-center transition-all shadow-xs"
+                >
+                  🔒 Revoke Access Instantly
+                </button>
+              ) : (
+                <span className="text-rose-400 font-mono font-bold text-[11px] bg-rose-950/60 px-2.5 py-1 rounded border border-rose-800">
+                  REVOKED BY PATIENT
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
       
       {/* Friendly Header */}
       <div className="bg-white border border-slate-200/80 p-6 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export const AuthView: React.FC = () => {
-  const { loginUser, language, setLanguage, showToast } = useEmergency();
+  const { loginUser, language, setLanguage, t, showToast } = useEmergency();
   
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [registerStep, setRegisterStep] = useState<1 | 2 | 3>(1);
@@ -261,10 +261,10 @@ export const AuthView: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h3 className="text-lg font-black text-slate-900">
-                {authMode === 'login' ? "Sign In to Gateway" : `Register Account (Step ${registerStep}/3)`}
+                {authMode === 'login' ? t('sign_in_gateway') : `${t('register_account')} (Step ${registerStep}/3)`}
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                {authMode === 'login' ? "Enter credentials to access portal" : (
+                {authMode === 'login' ? t('enter_credentials') : (
                   registerStep === 1 ? "Step 1: Account & Credentials" : (
                     registerStep === 2 ? "Step 2: Medical Profile Baseline" : "Step 3: Emergency Contacts & Instructions"
                   )
@@ -306,7 +306,7 @@ export const AuthView: React.FC = () => {
           {authMode === 'login' && (
             <form onSubmit={handleLoginSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-slate-900 font-bold mb-1">Email Address</label>
+                <label className="block text-slate-900 font-bold mb-1">{t('email_address')}</label>
                 <input
                   type="email"
                   value={email}
@@ -317,12 +317,12 @@ export const AuthView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-slate-900 font-bold mb-1">Password</label>
+                <label className="block text-slate-900 font-bold mb-1">{t('password')}</label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder="••••••••"
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold focus:outline-none focus:border-slate-400"
                 />
               </div>
@@ -332,7 +332,7 @@ export const AuthView: React.FC = () => {
                 disabled={isSubmitting}
                 className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-2xl shadow-sm text-xs uppercase tracking-wider flex items-center justify-center space-x-2 transition-transform hover:scale-[1.005] mt-2"
               >
-                <span>{isSubmitting ? "Authenticating..." : "Sign In & Unlock Portal →"}</span>
+                <span>{isSubmitting ? t('authenticating') : t('sign_in_btn')}</span>
               </button>
 
               <div className="flex items-center justify-between pt-2 text-xs font-bold border-t border-slate-100">
@@ -341,7 +341,7 @@ export const AuthView: React.FC = () => {
                   onClick={() => { setAuthMode('register'); setRegisterStep(1); setErrorMessage(null); }}
                   className="text-emerald-700 hover:text-emerald-900 hover:underline"
                 >
-                  Don't have an account? <span className="font-black underline">Register</span>
+                  {t('no_account')} <span className="font-black underline">{t('register_link')}</span>
                 </button>
 
                 <button
@@ -350,7 +350,7 @@ export const AuthView: React.FC = () => {
                   className="text-slate-600 hover:text-slate-900 flex items-center space-x-1"
                 >
                   <KeyRound className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Forgot Password? Reset</span>
+                  <span>{t('forgot_password')}</span>
                 </button>
               </div>
             </form>

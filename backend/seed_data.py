@@ -110,6 +110,9 @@ def seed_database():
                 burn_unit=True,
                 icu_beds_available=4,
                 total_beds=150,
+                ventilator_count=6,
+                blood_bank_status="O-NEG & B-POS STOCKED",
+                trauma_bed_capacity=8,
                 er_status="OPEN"
             ),
             models.Hospital(
@@ -123,6 +126,9 @@ def seed_database():
                 burn_unit=False,
                 icu_beds_available=3,
                 total_beds=120,
+                ventilator_count=4,
+                blood_bank_status="STOCKS_AVAILABLE",
+                trauma_bed_capacity=5,
                 er_status="OPEN"
             ),
             models.Hospital(
@@ -136,6 +142,9 @@ def seed_database():
                 burn_unit=True,
                 icu_beds_available=5,
                 total_beds=200,
+                ventilator_count=8,
+                blood_bank_status="FULL_SUPPLY",
+                trauma_bed_capacity=10,
                 er_status="OPEN"
             ),
             models.Hospital(
@@ -149,6 +158,9 @@ def seed_database():
                 burn_unit=False,
                 icu_beds_available=2,
                 total_beds=180,
+                ventilator_count=3,
+                blood_bank_status="CRITICAL_LOW_O_NEG",
+                trauma_bed_capacity=4,
                 er_status="OPEN"
             ),
             models.Hospital(
