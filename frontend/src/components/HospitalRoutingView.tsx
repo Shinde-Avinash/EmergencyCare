@@ -178,6 +178,10 @@ export const HospitalRoutingView: React.FC = () => {
   const [handoffStatus, setHandoffStatus] = useState<string | null>(null);
   const [doctorNotes, setDoctorNotes] = useState('Acknowledged by ER Triage desk. Level-1 Trauma Bay prepared with blood warmer.');
 
+  // Uplift Feature States: Disaster Mode & START Triage Tagging
+  const [disasterMode, setDisasterMode] = useState(false);
+  const [triageTag, setTriageTag] = useState<'RED' | 'YELLOW' | 'GREEN' | 'BLACK'>('RED');
+
   // Interactive Map & Real Geolocation Search State
   const [mapLayer, setMapLayer] = useState<'terrain' | 'satellite'>('terrain');
   const [userGpsCoords, setUserGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -499,18 +503,57 @@ export const HospitalRoutingView: React.FC = () => {
           </p>
         </div>
 
-        {/* Specialty Filter */}
-        <div className="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-2xl text-xs font-semibold border border-slate-200">
-          <span className="text-slate-600 px-2 font-bold">Capability:</span>
-          <select
-            value={specialty}
-            onChange={(e) => setSpecialty(e.target.value)}
-            className="bg-white text-slate-900 font-black px-3 py-1.5 rounded-xl border border-slate-300 focus:outline-none cursor-pointer shadow-sm"
+        {/* Disaster Mode & Capability Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          
+          {/* Disaster Mode Toggle */}
+          <button
+            onClick={() => {
+              setDisasterMode(!disasterMode);
+              showToast(disasterMode ? "Disaster Mode Deactivated." : "🚨 MASS CASUALTY DISASTER MODE ACTIVATED!");
+            }}
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs border flex items-center space-x-1.5 transition-all shadow-xs ${
+              disasterMode 
+                ? 'bg-rose-600 text-white border-rose-700 animate-pulse' 
+                : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
+            }`}
           >
-            <option value="TRAUMA">Level-1 Trauma Center</option>
-            <option value="CARDIAC">Cardiac Cath Lab</option>
-            <option value="BURN">Burn Intensive Care Unit</option>
-          </select>
+            <span>🚨 {disasterMode ? 'MASS CASUALTY MODE ACTIVE' : 'Mass Casualty Mode'}</span>
+          </button>
+
+          {/* START Triage Selector when Disaster Mode is active */}
+          {disasterMode && (
+            <div className="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl">
+              <span className="text-[10px] text-slate-300 font-bold px-2 uppercase">START Tag:</span>
+              {(['RED', 'YELLOW', 'GREEN', 'BLACK'] as const).map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setTriageTag(tag)}
+                  className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black transition-all ${
+                    triageTag === tag 
+                      ? (tag === 'RED' ? 'bg-rose-600 text-white' : tag === 'YELLOW' ? 'bg-amber-400 text-slate-950' : tag === 'GREEN' ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-white')
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Specialty Filter */}
+          <div className="flex items-center space-x-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold border border-slate-200">
+            <span className="text-slate-600 px-2 font-bold">Capability:</span>
+            <select
+              value={specialty}
+              onChange={(e) => setSpecialty(e.target.value)}
+              className="bg-white text-slate-900 font-black px-3 py-1 rounded-lg border border-slate-300 focus:outline-none cursor-pointer shadow-xs"
+            >
+              <option value="TRAUMA">Level-1 Trauma Center</option>
+              <option value="CARDIAC">Cardiac Cath Lab</option>
+              <option value="BURN">Burn Intensive Care Unit</option>
+            </select>
+          </div>
         </div>
       </div>
 

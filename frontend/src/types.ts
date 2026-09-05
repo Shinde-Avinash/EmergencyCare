@@ -135,3 +135,62 @@ export interface MedicalDocumentItem {
   verification_status: string;
   preview: string;
 }
+
+export type TriageColorTag = 'RED' | 'YELLOW' | 'GREEN' | 'BLACK';
+
+export interface NEWS2Result {
+  news2_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  recommendation: string;
+  subscores: Record<string, number>;
+  is_red_flag: boolean;
+}
+
+export interface DrugWarning {
+  requested_drug: string;
+  triggered_by: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  warning: string;
+}
+
+export interface DrugCheckResult {
+  is_safe: boolean;
+  warning_count: number;
+  warnings: DrugWarning[];
+  checked_drugs: string[];
+}
+
+export interface HandoffTimelineEvent {
+  step: number;
+  title: string;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
+  timestamp: string;
+  details: string;
+}
+
+export interface HospitalCapacityMetrics {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  icu_beds_available: number;
+  total_beds: number;
+  ventilator_count: number;
+  blood_bank_status: string;
+  trauma_bed_capacity: number;
+  er_status: string;
+  occupancy_rate: number;
+}
+
+export interface WalletPassData {
+  pass_format: string;
+  emergency_id: string;
+  patient_name: string;
+  blood_group: string;
+  qr_break_glass_token: string;
+  primary_allergies: string;
+  emergency_contact_phone: string;
+  valid_until: string;
+  offline_cache_hash: string;
+}
+

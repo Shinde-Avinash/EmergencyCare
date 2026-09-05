@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserRole, LanguageCode, PatientProfile, EmergencyIdentity, Incident, ReadinessScore } from '../types';
+import { getTranslation } from '../utils/i18n';
 
 export interface AppointmentItem {
   id: string;
@@ -24,6 +25,7 @@ interface EmergencyContextType {
   setCurrentRole: (role: UserRole) => void;
   language: LanguageCode;
   setLanguage: (lang: LanguageCode) => void;
+  t: (key: string) => string;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   patient: PatientProfile | null;
@@ -54,7 +56,14 @@ const EmergencyContext = createContext<EmergencyContextType | undefined>(undefin
 
 export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>('PATIENT');
-  const [language, setLanguage] = useState<LanguageCode>('en');
+  const [language, setLanguageState] = useState<LanguageCode>(() => {
+    return (localStorage.getItem("emergencycare_lang") as LanguageCode) || 'en';
+  });
+
+  const setLanguage = (lang: LanguageCode) => {
+    setLanguageState(lang);
+    localStorage.setItem("emergencycare_lang", lang);
+  };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   
   // Restore authUser session from localStorage on refresh
@@ -345,6 +354,7 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setCurrentRole,
         language,
         setLanguage,
+        t: (key: string) => getTranslation(key, language),
         activeTab,
         setActiveTab,
         patient,

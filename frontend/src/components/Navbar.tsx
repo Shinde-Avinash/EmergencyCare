@@ -23,6 +23,9 @@ export const Navbar: React.FC = () => {
   const { 
     currentRole, 
     setCurrentRole, 
+    language,
+    setLanguage,
+    t,
     activeTab, 
     setActiveTab, 
     authUser, 
@@ -69,6 +72,20 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Global Language Selector (Mobile) */}
+            <div className="bg-white border border-slate-300 rounded-xl px-2 py-1 text-xs shadow-2xs flex items-center space-x-1">
+              <span className="text-[11px]">🌐</span>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as any)}
+                className="bg-transparent font-black text-slate-900 focus:outline-none cursor-pointer text-xs"
+              >
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+                <option value="mr">मराठी</option>
+              </select>
+            </div>
+
             <span className="text-[10px] font-black bg-white text-emerald-900 px-2.5 py-1 rounded-full border border-slate-200 uppercase tracking-wider">
               {role}
             </span>
@@ -334,7 +351,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <LayoutDashboard className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>Dashboard</span>}
+                  {!isSidebarCollapsed && <span>{t('dashboard')}</span>}
                 </div>
               </button>
             )}
@@ -352,7 +369,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <User className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>My Profile</span>}
+                  {!isSidebarCollapsed && <span>{t('profile')}</span>}
                 </div>
               </button>
             )}
@@ -370,7 +387,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <QrCode className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>QR & NFC Cards</span>}
+                  {!isSidebarCollapsed && <span>{t('qr_identity')}</span>}
                 </div>
               </button>
             )}
@@ -388,7 +405,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Users className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>Care Circle</span>}
+                  {!isSidebarCollapsed && <span>{t('care_circle')}</span>}
                 </div>
               </button>
             )}
@@ -406,7 +423,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Scan className="w-3.5 h-3.5" />
-                  {!isSidebarCollapsed && <span>Break-Glass</span>}
+                  {!isSidebarCollapsed && <span>{t('scanner')}</span>}
                 </div>
                 {!isSidebarCollapsed && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />}
               </button>
@@ -425,7 +442,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <Building2 className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>{isPatient ? "Nearest Hospitals" : "Hospital ER"}</span>}
+                  {!isSidebarCollapsed && <span>{t('hospital_routing')}</span>}
                 </div>
                 {!isSidebarCollapsed && (
                   <span className="w-3.5 h-3.5 rounded-full bg-slate-900 text-white text-[8px] font-black flex items-center justify-center">
@@ -435,7 +452,7 @@ export const Navbar: React.FC = () => {
               </button>
             )}
 
-            {/* 9. HEALTH RECORDS & TEST REPORTS (Patient, Doctor) */}
+            {/* 9. HEALTH RECORDS (Patient, Doctor) */}
             {(isPatient || isDoctor) && (
               <button
                 onClick={() => setActiveTab('records')}
@@ -444,11 +461,11 @@ export const Navbar: React.FC = () => {
                     ? 'bg-white text-slate-900 shadow-sm border border-slate-200/80 font-extrabold'
                     : 'text-slate-700 hover:bg-white/60 hover:text-slate-900'
                 }`}
-                title={isPatient ? "Health Records & Test Reports" : "AI Clinical Docs"}
+                title="Health Records"
               >
                 <div className="flex items-center space-x-2">
                   <FileText className="w-3.5 h-3.5 text-slate-800" />
-                  {!isSidebarCollapsed && <span>{isPatient ? "Health Records" : "AI Docs"}</span>}
+                  {!isSidebarCollapsed && <span>{t('medical_records')}</span>}
                 </div>
               </button>
             )}
@@ -465,7 +482,35 @@ export const Navbar: React.FC = () => {
         )}
 
         {/* User Profile Card & Role Switcher */}
-        <div className="pt-2 space-y-1.5 border-t border-[#d3e4e0]/60">
+        <div className="pt-2 space-y-2 border-t border-[#d3e4e0]/60">
+          
+          {/* Global Language Selector (Desktop Sidebar) */}
+          {!isSidebarCollapsed ? (
+            <div className="bg-white p-2 rounded-xl border border-slate-200/80 flex items-center justify-between shadow-2xs">
+              <span className="text-xs font-black text-slate-800 flex items-center space-x-1">
+                <span>🌐</span>
+                <span>{t('language_select')}:</span>
+              </span>
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as any)}
+                className="bg-slate-100 font-black text-slate-900 text-xs px-2.5 py-1 rounded-lg border border-slate-300 focus:outline-none cursor-pointer"
+              >
+                <option value="en">English</option>
+                <option value="hi">हिन्दी</option>
+                <option value="mr">मराठी</option>
+              </select>
+            </div>
+          ) : (
+            <button
+              onClick={() => setLanguage(language === 'en' ? 'hi' : language === 'hi' ? 'mr' : 'en')}
+              title={`Switch Language: ${language.toUpperCase()}`}
+              className="w-full flex justify-center p-1.5 rounded-lg bg-white font-black text-xs text-slate-900 shadow-2xs"
+            >
+              🌐 {language.toUpperCase()}
+            </button>
+          )}
+
           {!isSidebarCollapsed ? (
             <>
               <div className="bg-white p-1.5 rounded-xl border border-slate-200/80 flex items-center justify-between shadow-xs">

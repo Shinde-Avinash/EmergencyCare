@@ -104,3 +104,26 @@ class AuditVerifyResponse(BaseModel):
     total_blocks: int
     verified_at: str
     details: str
+
+class NEWS2CalculatorInput(BaseModel):
+    respiratory_rate: int = 16
+    sp02: float = 98.0
+    systolic_bp: int = 120
+    pulse_rate: int = 75
+    consciousness: str = "ALERT" # ALERT, CVPU
+    temperature: float = 37.0
+    on_oxygen: bool = False
+
+class DrugGuardInput(BaseModel):
+    patient_id: Optional[int] = 1
+    requested_drugs: List[str]
+
+class MassCasualtyTagInput(BaseModel):
+    incident_code: str
+    triage_tag: str # RED, YELLOW, GREEN, BLACK
+    news2_score: Optional[int] = None
+
+class SessionRevokeRequest(BaseModel):
+    session_token: str
+    reason: Optional[str] = "Revoked by patient consent manager"
+

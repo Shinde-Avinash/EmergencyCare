@@ -69,6 +69,7 @@ class BreakGlassSession(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=True)
+    biometric_verified = Column(Boolean, default=False)
 
 class MedicalDocument(Base):
     __tablename__ = "medical_documents"
@@ -98,6 +99,9 @@ class Hospital(Base):
     burn_unit = Column(Boolean, default=False)
     icu_beds_available = Column(Integer, default=5)
     total_beds = Column(Integer, default=100)
+    ventilator_count = Column(Integer, default=3)
+    blood_bank_status = Column(String(50), default="STOCKS_AVAILABLE")
+    trauma_bed_capacity = Column(Integer, default=5)
     er_status = Column(String(20), default="OPEN") # OPEN, BUSY, FULL
 
 class EmergencyIncident(Base):
@@ -111,6 +115,8 @@ class EmergencyIncident(Base):
     
     # State Machine: CREATED -> VERIFIED -> RESPONDER_ASSIGNED -> HOSPITAL_SELECTED -> HOSPITAL_NOTIFIED -> PATIENT_IN_TRANSIT -> HOSPITAL_RECEIVED -> CLOSED
     status = Column(String(50), default="CREATED")
+    triage_tag = Column(String(20), default="GREEN") # RED, YELLOW, GREEN, BLACK
+    news2_score = Column(Integer, nullable=True)
     
     current_lat = Column(Float, nullable=True)
     current_lng = Column(Float, nullable=True)

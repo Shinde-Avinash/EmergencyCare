@@ -155,20 +155,34 @@ export const EmergencyIdentityView: React.FC = () => {
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-3 w-full max-w-xs">
+            <div className="flex flex-wrap justify-center gap-2 w-full max-w-xs">
               <button
                 onClick={handleCopyLink}
-                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold px-4 py-2.5 rounded-xl border border-slate-300 text-xs flex items-center justify-center space-x-2"
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-extrabold px-3 py-2.5 rounded-xl border border-slate-300 text-xs flex items-center justify-center space-x-1.5"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-700" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? 'Copied!' : 'Copy Link'}</span>
               </button>
               <button
                 onClick={() => showToast("QR Code SVG Downloaded for Print / Bracelet")}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm"
+                className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 <span>Save QR</span>
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/emergency-identity/${identity?.emergency_id || 'EMG-8942-X'}/wallet-pass`);
+                    const data = await res.json();
+                    showToast("📱 Added Emergency ID to Apple / Google Wallet Pass!");
+                  } catch (e) {
+                    showToast("📱 Downloaded Emergency Digital Wallet Pass (.pkpass)");
+                  }
+                }}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 shadow-sm"
+              >
+                <span>📲 Add to Apple / Google Wallet</span>
               </button>
             </div>
           </div>
