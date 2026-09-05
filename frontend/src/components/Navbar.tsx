@@ -31,12 +31,17 @@ export const Navbar: React.FC = () => {
     authUser, 
     logoutUser,
     isSidebarCollapsed,
-    setIsSidebarCollapsed
+    setIsSidebarCollapsed,
+    sessionRemainingSeconds
   } = useEmergency();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const role = authUser?.role || currentRole || 'PATIENT';
+
+  const mins = Math.floor(sessionRemainingSeconds / 60);
+  const secs = sessionRemainingSeconds % 60;
+  const formattedTimer = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
   // Role-Based Menu Visibility Flags
   const isPatient = role === 'PATIENT';
@@ -67,11 +72,17 @@ export const Navbar: React.FC = () => {
               ⚡
             </div>
             <h1 className="font-black text-base text-slate-900 tracking-tight">
-              Emergency<span className="text-emerald-700">Care</span>
+              {t('app_title')}
             </h1>
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Session Timer Badge (Mobile) */}
+            <div className="bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl text-[10px] font-black text-amber-900 shadow-2xs flex items-center space-x-1" title="15-min Inactivity Session Timeout">
+              <span>⏱️</span>
+              <span>{formattedTimer}</span>
+            </div>
+
             {/* Global Language Selector (Mobile) */}
             <div className="bg-white border border-slate-300 rounded-xl px-2 py-1 text-xs shadow-2xs flex items-center space-x-1">
               <span className="text-[11px]">🌐</span>
@@ -112,7 +123,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <UserCheck className="w-4 h-4 text-emerald-600" />
-                  <span>Admin Patients Database</span>
+                  <span>{t('admin_patients')}</span>
                 </div>
               </button>
             )}
@@ -126,7 +137,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <Lock className="w-4 h-4 text-slate-800" />
-                  <span>Security Audit Log</span>
+                  <span>{t('audit_ledger')}</span>
                 </div>
               </button>
             )}
@@ -140,7 +151,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <LayoutDashboard className="w-4 h-4 text-slate-800" />
-                  <span>Dashboard</span>
+                  <span>{t('dashboard')}</span>
                 </div>
               </button>
             )}
@@ -154,7 +165,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <User className="w-4 h-4 text-slate-800" />
-                  <span>My Profile</span>
+                  <span>{t('profile')}</span>
                 </div>
               </button>
             )}
@@ -168,7 +179,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <QrCode className="w-4 h-4 text-slate-800" />
-                  <span>QR & NFC Digital Identity Cards</span>
+                  <span>{t('qr_identity')}</span>
                 </div>
               </button>
             )}
@@ -182,7 +193,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <Users className="w-4 h-4 text-slate-800" />
-                  <span>Family Care Circle</span>
+                  <span>{t('care_circle')}</span>
                 </div>
               </button>
             )}
@@ -196,7 +207,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <Scan className="w-4 h-4" />
-                  <span>🚨 Break-Glass Emergency Scanner</span>
+                  <span>🚨 {t('scanner')}</span>
                 </div>
               </button>
             )}
@@ -210,7 +221,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <Building2 className="w-4 h-4 text-slate-800" />
-                  <span>{isPatient ? "Nearest Hospitals Map" : "Hospital ER Dispatch Map"}</span>
+                  <span>{t('hospital_routing')}</span>
                 </div>
               </button>
             )}
@@ -224,7 +235,7 @@ export const Navbar: React.FC = () => {
               >
                 <div className="flex items-center space-x-2.5">
                   <FileText className="w-4 h-4 text-slate-800" />
-                  <span>{isPatient ? "Health Records & Test Reports" : "AI Clinical Documents"}</span>
+                  <span>{t('medical_records')}</span>
                 </div>
               </button>
             )}
@@ -236,7 +247,7 @@ export const Navbar: React.FC = () => {
                 className="bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span>Log Out</span>
+                <span>{t('logout')}</span>
               </button>
             </div>
           </div>
@@ -291,6 +302,23 @@ export const Navbar: React.FC = () => {
             {isSidebarCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           </button>
         </div>
+
+        {/* Session Inactivity Countdown Badge (Desktop) */}
+        {!isSidebarCollapsed ? (
+          <div className="bg-amber-50/90 border border-amber-200/80 p-2 rounded-xl flex items-center justify-between shadow-2xs text-[11px]" title="Auto-logout after 15 minutes of inactivity">
+            <span className="font-bold text-amber-900 flex items-center space-x-1">
+              <span>⏱️</span>
+              <span>{t('session_timer')}:</span>
+            </span>
+            <span className="font-mono font-black text-amber-950 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+              {formattedTimer}
+            </span>
+          </div>
+        ) : (
+          <div className="flex justify-center text-[10px] font-black text-amber-900 bg-amber-100 p-1 rounded-lg border border-amber-200" title={`Session expires in ${formattedTimer}`}>
+            ⏱️ {mins}m
+          </div>
+        )}
 
         {/* ROLE-BASED SEGREGATED NAVIGATION MENU */}
         <div className="space-y-0.5">

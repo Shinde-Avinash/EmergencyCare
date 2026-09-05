@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const CareCircleView: React.FC = () => {
-  const { showToast } = useEmergency();
+  const { showToast, t } = useEmergency();
   
   const [members, setMembers] = useState<CareCircleMember[]>([]);
   const [newName, setNewName] = useState('');
@@ -69,18 +69,18 @@ export const CareCircleView: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-emerald-700 font-extrabold text-xs uppercase tracking-wider mb-1">
             <Users className="w-4 h-4 text-emerald-700" />
-            <span>FAMILY CARE CIRCLE & CONSENT GOVERNANCE</span>
+            <span>{t('care_circle_header')}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Family Care Circle</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900">{t('care_circle')}</h2>
           <p className="text-xs text-slate-600 font-bold mt-1">
-            Manage trusted caregivers, assign granular consent permissions, and automate emergency alerts.
+            {t('care_circle_subtitle')}
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
           <span className="bg-emerald-100 text-emerald-950 border border-emerald-300 text-xs font-black px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 shadow-2xs">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
-            <span>{members.length} Trusted Contacts Active</span>
+            <span>{members.length} {t('trusted_contacts')}</span>
           </span>
         </div>
       </div>
@@ -91,7 +91,7 @@ export const CareCircleView: React.FC = () => {
         {/* Care Circle Members */}
         <div className="bg-white border border-slate-200/80 p-6 rounded-3xl space-y-5 lg:col-span-2 shadow-sm">
           <h3 className="font-black text-lg text-slate-900 border-b border-slate-200 pb-3 flex items-center justify-between">
-            <span>Trusted Care Circle Members</span>
+            <span>{t('care_circle')}</span>
             <span className="text-xs font-black text-emerald-900 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
               {members.length} Registered
             </span>
@@ -112,7 +112,7 @@ export const CareCircleView: React.FC = () => {
                       ? 'bg-emerald-100 text-emerald-950 border-emerald-300' 
                       : 'bg-sky-100 text-sky-950 border-sky-300'
                   }`}>
-                    {m.permission_tier === 'FULL' ? 'Full Medical Access' : 'Emergency Alert'}
+                    {m.permission_tier === 'FULL' ? t('full_access') : t('emergency_alert_only')}
                   </span>
                 </div>
 
@@ -123,7 +123,7 @@ export const CareCircleView: React.FC = () => {
                   </span>
                   <span className="text-emerald-800 text-[10px] font-black flex items-center space-x-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                     <Bell className="w-3 h-3 text-emerald-700" />
-                    <span>Alert Active</span>
+                    <span>{t('alert_active')}</span>
                   </span>
                 </div>
               </div>
@@ -134,12 +134,12 @@ export const CareCircleView: React.FC = () => {
           <div className="bg-[#e8f4f0] p-5 rounded-2xl border border-[#c3e2d9] space-y-3.5 shadow-2xs">
             <h4 className="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center space-x-1.5">
               <UserPlus className="w-4 h-4 text-emerald-700" />
-              <span>Add New Care Circle Contact</span>
+              <span>{t('add_contact')}</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div>
-                <label className="block text-[11px] font-black text-slate-800 mb-1">Caregiver Full Name</label>
+                <label className="block text-[11px] font-black text-slate-800 mb-1">{t('caregiver_name')}</label>
                 <input
                   type="text"
                   value={newName}
@@ -150,7 +150,7 @@ export const CareCircleView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-slate-800 mb-1">Relationship</label>
+                <label className="block text-[11px] font-black text-slate-800 mb-1">{t('relationship')}</label>
                 <select
                   value={newRel}
                   onChange={(e) => setNewRel(e.target.value)}
@@ -165,7 +165,7 @@ export const CareCircleView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-black text-slate-800 mb-1">Mobile Phone Number</label>
+                <label className="block text-[11px] font-black text-slate-800 mb-1">{t('phone_number')}</label>
                 <input
                   type="text"
                   value={newPhone}
@@ -182,7 +182,7 @@ export const CareCircleView: React.FC = () => {
                 className="bg-slate-900 hover:bg-slate-800 text-white font-black px-5 py-2.5 rounded-xl text-xs flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.01]"
               >
                 <Plus className="w-4 h-4 text-emerald-400" />
-                <span>Add Caregiver to Circle</span>
+                <span>{t('add_contact')}</span>
               </button>
             </div>
           </div>

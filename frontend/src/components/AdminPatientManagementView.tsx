@@ -39,7 +39,7 @@ export interface AdminPatient {
 }
 
 export const AdminPatientManagementView: React.FC = () => {
-  const { showToast } = useEmergency();
+  const { showToast, patient, authUser, t } = useEmergency();
 
   // Initial Default Patients List (Guarantees ALL pre-seeded accounts including avi@s.com display)
   const initialDefaultPatients: AdminPatient[] = [

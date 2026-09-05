@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const ProfileView: React.FC = () => {
-  const { patient, updatePatientProfile, readiness, authUser, setActiveTab, showToast } = useEmergency();
+  const { patient, updatePatientProfile, readiness, authUser, setActiveTab, showToast, t } = useEmergency();
 
   const [fullName, setFullName] = useState(patient?.full_name || authUser?.name || '');
   const [bloodGroup, setBloodGroup] = useState(patient?.blood_group || 'B+');
@@ -110,9 +110,9 @@ export const ProfileView: React.FC = () => {
             <User className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-slate-900">Patient Profile & Emergency Setup</h2>
+            <h2 className="text-2xl font-black text-slate-900">{t('profile_title')}</h2>
             <p className="text-xs text-slate-700 font-bold mt-0.5">
-              Edit your baseline medical parameters revealed during controlled Break-Glass emergency access.
+              {t('profile_subtitle')}
             </p>
           </div>
         </div>
@@ -123,7 +123,7 @@ export const ProfileView: React.FC = () => {
             className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02]"
           >
             <Download className="w-4 h-4 text-white" />
-            <span>Export HL7 FHIR R4 Bundle 🏥</span>
+            <span>{t('export_fhir')}</span>
           </button>
 
           <button
@@ -131,12 +131,12 @@ export const ProfileView: React.FC = () => {
             className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-3.5 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm transition-transform hover:scale-[1.02]"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Request Role Update</span>
+            <span>{t('request_role')}</span>
           </button>
 
           <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black px-3 py-1.5 rounded-full flex items-center space-x-1">
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
-            <span>Readiness: {readiness?.score || 85}/100</span>
+            <span>{t('readiness')}: {readiness?.score || 85}/100</span>
           </span>
         </div>
       </div>

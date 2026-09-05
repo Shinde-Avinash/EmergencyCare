@@ -28,7 +28,8 @@ export const DashboardView: React.FC = () => {
     readiness, 
     appointments, 
     addAppointment, 
-    deleteAppointment 
+    deleteAppointment,
+    t 
   } = useEmergency();
 
   const [activeMetric, setActiveMetric] = useState<'vitals' | 'bp' | 'pulse'>('vitals');
@@ -131,15 +132,15 @@ export const DashboardView: React.FC = () => {
       {/* Top Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Dashboard</h1>
-          <p className="text-xs text-slate-600 font-medium">Welcome back, {patient?.full_name || 'Rahul Sharma'}</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{t('dashboard')}</h1>
+          <p className="text-xs text-slate-600 font-medium">{t('welcome')}, {patient?.full_name || 'Rahul Sharma'}</p>
         </div>
 
         <div className="relative w-full sm:w-72">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
           <input
             type="text"
-            placeholder="Search record, doctor, hospital..."
+            placeholder={t('search_placeholder')}
             className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-400 shadow-sm"
           />
         </div>
@@ -154,12 +155,12 @@ export const DashboardView: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center space-x-2">
-                <h2 className="text-lg font-black text-slate-900">My parameters</h2>
+                <h2 className="text-lg font-black text-slate-900">{t('my_parameters')}</h2>
                 <span className="text-[10px] font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
                   {currentChart.badge}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium">Track key emergency readiness & health metrics over time</p>
+              <p className="text-xs text-slate-500 font-medium">{t('track_metrics')}</p>
             </div>
 
             {/* Metric Switcher Tabs */}
@@ -170,7 +171,7 @@ export const DashboardView: React.FC = () => {
                   activeMetric === 'vitals' ? 'bg-slate-900 text-white shadow-sm font-black' : 'text-slate-700 hover:text-slate-900'
                 }`}
               >
-                Readiness • Vitals
+                {t('vitals_tab')}
               </button>
               <button
                 onClick={() => setActiveMetric('bp')}
@@ -178,7 +179,7 @@ export const DashboardView: React.FC = () => {
                   activeMetric === 'bp' ? 'bg-slate-900 text-white shadow-sm font-black' : 'text-slate-700 hover:text-slate-900'
                 }`}
               >
-                Blood Pressure
+                {t('bp_tab')}
               </button>
               <button
                 onClick={() => setActiveMetric('pulse')}
@@ -186,7 +187,7 @@ export const DashboardView: React.FC = () => {
                   activeMetric === 'pulse' ? 'bg-slate-900 text-white shadow-sm font-black' : 'text-slate-700 hover:text-slate-900'
                 }`}
               >
-                Pulse
+                {t('pulse_tab')}
               </button>
             </div>
           </div>
@@ -318,8 +319,8 @@ export const DashboardView: React.FC = () => {
           
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-black text-slate-900">My appointments</h3>
-              <p className="text-xs text-slate-500 font-medium">Scheduled visits and emergency consultations ({appointments.length})</p>
+              <h3 className="text-lg font-black text-slate-900">{t('appointments')}</h3>
+              <p className="text-xs text-slate-500 font-medium">{t('scheduled_apps')} ({appointments.length})</p>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -328,7 +329,7 @@ export const DashboardView: React.FC = () => {
                 className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-full text-xs font-black flex items-center space-x-1 shadow-sm transition-transform hover:scale-[1.02]"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Book Appointment</span>
+                <span>{t('book_appointment')}</span>
               </button>
             </div>
           </div>
@@ -369,7 +370,7 @@ export const DashboardView: React.FC = () => {
             className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-3 rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-sm transition-transform hover:scale-[1.005]"
           >
             <Scan className="w-4 h-4 text-white" />
-            <span>🚨 Initiate Break-Glass Emergency Access</span>
+            <span>🚨 {t('scan_now')}</span>
           </button>
 
         </div>

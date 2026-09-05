@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const EmergencyIdentityView: React.FC = () => {
-  const { identity, patient, authUser, showToast } = useEmergency();
+  const { identity, patient, authUser, showToast, t } = useEmergency();
   const [copied, setCopied] = useState(false);
   const [nfcSimulating, setNfcSimulating] = useState(false);
   const [activeTab, setActiveTab] = useState<'qr' | 'nfc' | 'print' | 'lockscreen'>('qr');

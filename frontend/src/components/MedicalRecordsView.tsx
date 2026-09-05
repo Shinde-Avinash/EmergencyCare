@@ -20,22 +20,27 @@ import {
 } from 'lucide-react';
 
 export const MedicalRecordsView: React.FC = () => {
-  const { patient, authUser, showToast, refreshData } = useEmergency();
-  
+  const { patient, authUser, showToast, t } = useEmergency();
+
   const [documents, setDocuments] = useState<MedicalDocumentItem[]>([]);
-  const [uploadTitle, setUploadTitle] = useState('Complete Blood Count & Allergy Panel');
-  const [uploadCategory, setUploadCategory] = useState('Lab Report');
-  const [uploadRawText, setUploadRawText] = useState(`Patient: ${patient?.full_name || authUser?.name || 'Rahul Sharma'}. Blood Group: ${patient?.blood_group || 'B+'}. Lab Readings: Hb 14.2 g/dL, Fasting Blood Sugar 98 mg/dL, IgE sensitivity to Penicillin derivatives.`);
+  const [filterType, setFilterType] = useState<string>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadTitle, setUploadTitle] = useState('');
+  const [uploadCategory, setUploadCategory] = useState('Diagnostic Lab Report');
+  const [uploadRawText, setUploadRawText] = useState('');
   const [isProcessingDoc, setIsProcessingDoc] = useState(false);
   const [ocrResult, setOcrResult] = useState<any>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Edit Modal State
+  // Edit document state
   const [editingDoc, setEditingDoc] = useState<MedicalDocumentItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editCategory, setEditCategory] = useState('');
   const [editPreview, setEditPreview] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleDeleteDoc = async (id: number) => {
     setDocuments(prev => prev.filter(d => d.id !== id));

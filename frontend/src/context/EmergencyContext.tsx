@@ -50,7 +50,13 @@ interface EmergencyContextType {
   appointments: AppointmentItem[];
   addAppointment: (app: Omit<AppointmentItem, 'id'>) => void;
   deleteAppointment: (id: string) => void;
+
+  // Session Timeout State (15 mins = 900 seconds)
+  sessionRemainingSeconds: number;
+  resetSessionTimer: () => void;
 }
+
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes inactivity limit
 
 const EmergencyContext = createContext<EmergencyContextType | undefined>(undefined);
 
@@ -66,11 +72,25 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   
-  // Restore authUser session from localStorage on refresh
+  // Restore authUser session from localStorage ONLY IF within 15-minute inactivity limit
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
     try {
       const savedUser = localStorage.getItem("emergencycare_user");
-      return savedUser ? JSON.parse(savedUser) : null;
+      const savedLastActive = localStorage.getItem("emergencycare_last_active");
+      if (!savedUser) return null;
+
+      const now = Date.now();
+      const lastActiveTime = savedLastActive ? parseInt(savedLastActive, 10) : 0;
+      
+      // If PC was shut down or user was inactive for > 15 minutes, invalidate session immediately
+      if (!lastActiveTime || (now - lastActiveTime) >= SESSION_TIMEOUT_MS) {
+        localStorage.removeItem("emergencycare_jwt");
+        localStorage.removeItem("emergencycare_user");
+        localStorage.removeItem("emergencycare_tab");
+        localStorage.removeItem("emergencycare_last_active");
+        return null;
+      }
+      return JSON.parse(savedUser);
     } catch (e) {
       return null;
     }
@@ -79,8 +99,16 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Restore activeTab from localStorage on refresh
   const [activeTab, setActiveTabState] = useState<string>(() => {
     const savedUser = localStorage.getItem("emergencycare_user");
+    const savedLastActive = localStorage.getItem("emergencycare_last_active");
+    if (!savedUser) return 'auth';
+
+    const now = Date.now();
+    const lastActiveTime = savedLastActive ? parseInt(savedLastActive, 10) : 0;
+    if (!lastActiveTime || (now - lastActiveTime) >= SESSION_TIMEOUT_MS) {
+      return 'auth';
+    }
     const savedTab = localStorage.getItem("emergencycare_tab");
-    return savedUser ? (savedTab || 'dashboard') : 'auth';
+    return savedTab || 'dashboard';
   });
 
   const setActiveTab = (tab: string) => {
@@ -93,6 +121,20 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeIncident, setActiveIncident] = useState<Incident | null>(null);
   const [readiness, setReadiness] = useState<ReadinessScore | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Session Activity & Timeout Management
+  const [lastActivityTime, setLastActivityTime] = useState<number>(() => {
+    const savedLastActive = localStorage.getItem("emergencycare_last_active");
+    return savedLastActive ? parseInt(savedLastActive, 10) : Date.now();
+  });
+  const [sessionRemainingSeconds, setSessionRemainingSeconds] = useState<number>(15 * 60);
+
+  const resetSessionTimer = () => {
+    const now = Date.now();
+    setLastActivityTime(now);
+    localStorage.setItem("emergencycare_last_active", now.toString());
+    setSessionRemainingSeconds(15 * 60);
+  };
 
   // Dynamic Appointments Initial List
   const [appointments, setAppointments] = useState<AppointmentItem[]>([
@@ -147,8 +189,13 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const u: AuthUser = { id: 1, name: actualName, email, role, patient_id: pid };
     setAuthUser(u);
     setCurrentRole(role);
+
+    const now = Date.now();
     localStorage.setItem("emergencycare_jwt", token || "demo_jwt_token");
     localStorage.setItem("emergencycare_user", JSON.stringify(u));
+    localStorage.setItem("emergencycare_last_active", now.toString());
+    setLastActivityTime(now);
+    setSessionRemainingSeconds(15 * 60);
 
     // Role-suited default tab routing
     let defaultTab = 'dashboard';
@@ -168,9 +215,71 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.removeItem("emergencycare_jwt");
     localStorage.removeItem("emergencycare_user");
     localStorage.removeItem("emergencycare_tab");
+    localStorage.removeItem("emergencycare_last_active");
     setActiveTabState("auth");
     showToast("🔒 Security Session Closed.");
   };
+
+  // Activity Monitor: Listen for user actions (click, scroll, keydown, mousemove, touchstart)
+  useEffect(() => {
+    if (!authUser) return;
+
+    let throttleTimeout: any = null;
+
+    const handleUserActivity = () => {
+      if (!throttleTimeout) {
+        throttleTimeout = setTimeout(() => {
+          throttleTimeout = null;
+        }, 2000); // Throttle activity updates to once every 2s
+
+        const now = Date.now();
+        setLastActivityTime(now);
+        localStorage.setItem("emergencycare_last_active", now.toString());
+      }
+    };
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(evt => window.addEventListener(evt, handleUserActivity, { passive: true }));
+
+    // Ticking timer: Check session expiration every 1 second
+    const intervalTimer = setInterval(() => {
+      const now = Date.now();
+      const savedLastActive = localStorage.getItem("emergencycare_last_active");
+      const lastActive = savedLastActive ? parseInt(savedLastActive, 10) : lastActivityTime;
+      const elapsedMs = now - lastActive;
+
+      if (elapsedMs >= SESSION_TIMEOUT_MS) {
+        logoutUser();
+        showToast("🔒 Session timed out due to 15 minutes of inactivity. Please log in again.");
+      } else {
+        const remaining = Math.max(0, Math.ceil((SESSION_TIMEOUT_MS - elapsedMs) / 1000));
+        setSessionRemainingSeconds(remaining);
+      }
+    }, 1000);
+
+    // Handle PC wakeup / tab switching (visibilitychange)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        const savedLastActive = localStorage.getItem("emergencycare_last_active");
+        const lastActive = savedLastActive ? parseInt(savedLastActive, 10) : lastActivityTime;
+        
+        if (!lastActive || (now - lastActive) >= SESSION_TIMEOUT_MS) {
+          logoutUser();
+          showToast("🔒 Session timed out due to 15 minutes of inactivity. Please log in again.");
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, handleUserActivity));
+      clearInterval(intervalTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (throttleTimeout) clearTimeout(throttleTimeout);
+    };
+  }, [authUser, lastActivityTime]);
 
   const fetchPatientData = async (targetPatientId?: number) => {
     const pid = targetPatientId || authUser?.patient_id || 1;
@@ -374,7 +483,9 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsSidebarCollapsed,
         appointments,
         addAppointment,
-        deleteAppointment
+        deleteAppointment,
+        sessionRemainingSeconds,
+        resetSessionTimer
       }}
     >
       {children}

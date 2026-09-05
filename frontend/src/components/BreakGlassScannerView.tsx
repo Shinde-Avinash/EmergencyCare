@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const BreakGlassScannerView: React.FC = () => {
-  const { currentRole, identity, patient, setActiveTab, showToast, updateIncidentStatus } = useEmergency();
+  const { currentRole, identity, patient, setActiveTab, showToast, updateIncidentStatus, t } = useEmergency();
   
   const [isScanning, setIsScanning] = useState(false);
   const [sessionData, setSessionData] = useState<any>(null);

@@ -30,7 +30,7 @@ interface ExtendedHospital extends Partial<Hospital> {
 }
 
 export const HospitalRoutingView: React.FC = () => {
-  const { activeIncident, updateIncidentStatus, showToast, patient } = useEmergency();
+  const { activeIncident, updateIncidentStatus, showToast, patient, t } = useEmergency();
   
   // Real-World Hospitals Database
   const defaultHospitals: ExtendedHospital[] = [
